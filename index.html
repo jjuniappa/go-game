@@ -133,7 +133,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 <section id="startOverlay" class="overlay">
   <div class="card">
     <h2>Tap Drift</h2>
-    <p>빨간 외길을 따라 달립니다. 시간이 지날수록 속도와 코너 빈도가 함께 올라갑니다.</p>
+    <p>빨간 외길을 따라 달립니다. 난이도는 속도와 코너 빈도로만 달라집니다.</p>
     <div class="difficulty">
       <button class="diff-btn" data-diff="easy">Easy</button>
       <button class="diff-btn active" data-diff="normal">Normal</button>
@@ -142,7 +142,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
     <button id="startBtn" class="btn">게임 시작</button>
     <div class="howto">
       조작법: 화면 아무 곳이나 터치 = 90도 방향 전환<br>
-      안내선 없음. 빨간 외길만 보고 타이밍을 맞추세요.
+      안내선 없음. 모든 난이도의 터치 성공 판정 간격은 동일합니다.
     </div>
   </div>
 </section>
@@ -192,9 +192,11 @@ let car,path,currentSeg,camera,score,distance,speed,roadWidth,totalTime;
 let particles=[];
 
 const diff={
-  easy:{speed:128,width:48,accel:4.2,turnWindow:42,cornerShrink:0.58},
-  normal:{speed:154,width:42,accel:5.8,turnWindow:36,cornerShrink:0.72},
-  hard:{speed:178,width:38,accel:7.4,turnWindow:31,cornerShrink:0.88}
+  // 난이도 차이: 속도 + 가속도 + 코너 빈도
+  // 성공 판정 간격은 모든 난이도 동일
+  easy:{speed:128,width:48,accel:4.2,turnWindow:23,cornerShrink:0.58},
+  normal:{speed:154,width:42,accel:5.8,turnWindow:23,cornerShrink:0.72},
+  hard:{speed:178,width:38,accel:7.4,turnWindow:23,cornerShrink:0.88}
 };
 
 const carLength=34;
