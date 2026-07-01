@@ -1,7 +1,7 @@
 {
   "name": "Tap Drift",
   "short_name": "TapDrift",
-  "description": "성공 판정 간격은 동일하고 난이도는 속도와 코너 빈도로 구분되는 Tap Drift",
+  "description": "난이도가 쉬움에서 노멀, 어려움으로 자동 진행되는 Tap Drift",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

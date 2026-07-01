@@ -119,7 +119,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
   </div>
   <div class="scorebox">
     <div><span>SCORE</span> <b id="scoreText">0</b></div>
-    <div><span>BEST</span> <b id="bestText">0</b></div>
+    <div><span>BEST</span> <b id="bestText">0</b> <span id="stageText">EASY</span></div>
   </div>
 </header>
 
@@ -133,16 +133,11 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 <section id="startOverlay" class="overlay">
   <div class="card">
     <h2>Tap Drift</h2>
-    <p>빨간 외길을 따라 달립니다. 난이도는 속도와 코너 빈도로만 달라집니다.</p>
-    <div class="difficulty">
-      <button class="diff-btn" data-diff="easy">Easy</button>
-      <button class="diff-btn active" data-diff="normal">Normal</button>
-      <button class="diff-btn" data-diff="hard">Hard</button>
-    </div>
+    <p>빨간 외길을 따라 달립니다. 게임이 진행될수록 자동으로 더 빨라지고 더 자주 꺾입니다.</p>
     <button id="startBtn" class="btn">게임 시작</button>
     <div class="howto">
       조작법: 화면 아무 곳이나 터치 = 90도 방향 전환<br>
-      안내선 없음. 모든 난이도의 터치 성공 판정 간격은 동일합니다.
+      안내선 없음. 초반은 쉽고, 시간이 지날수록 노멀·하드 단계로 자동 진행됩니다.
     </div>
   </div>
 </section>
@@ -174,6 +169,7 @@ const retryBtn=document.getElementById("retryBtn");
 const homeBtn=document.getElementById("homeBtn");
 const scoreText=document.getElementById("scoreText");
 const bestText=document.getElementById("bestText");
+const stageText=document.getElementById("stageText");
 const resultScore=document.getElementById("resultScore");
 const resultBest=document.getElementById("resultBest");
 const resultDistance=document.getElementById("resultDistance");
@@ -185,22 +181,32 @@ let W=0,H=0,dpr=1;
 let running=false;
 let raf=null;
 let last=0;
-let difficulty="normal";
+let stage="easy";
 let best=Number(localStorage.getItem("tap-drift-single-road-best")||0);
 
 let car,path,currentSeg,camera,score,distance,speed,roadWidth,totalTime;
 let particles=[];
 
-const diff={
-  // 난이도 차이: 속도 + 가속도 + 코너 빈도
-  // 성공 판정 간격은 모든 난이도 동일
-  easy:{speed:128,width:48,accel:4.2,turnWindow:23,cornerShrink:0.58},
-  normal:{speed:154,width:42,accel:5.8,turnWindow:23,cornerShrink:0.72},
-  hard:{speed:178,width:38,accel:7.4,turnWindow:23,cornerShrink:0.88}
+const stages={
+  // 자동 난이도 진행
+  // 성공 판정 간격은 모든 단계 동일
+  easy:{start:0,speed:124,width:48,accel:3.6,turnWindow:23,cornerShrink:0.45,label:"EASY"},
+  normal:{start:25,speed:152,width:43,accel:5.2,turnWindow:23,cornerShrink:0.68,label:"NORMAL"},
+  hard:{start:55,speed:178,width:39,accel:7.0,turnWindow:23,cornerShrink:0.92,label:"HARD"}
 };
 
 const carLength=34;
 const carWidth=23;
+
+function getStageByTime(){
+  if(totalTime>=stages.hard.start)return "hard";
+  if(totalTime>=stages.normal.start)return "normal";
+  return "easy";
+}
+
+function getCurrentCfg(){
+  return stages[stage] || stages.easy;
+}
 
 function resize(){
   const rect=game.getBoundingClientRect();
@@ -214,26 +220,23 @@ resize();
 
 function makePath(){
   /*
-    외길 난이도 상승형 생성:
-    - 전체 진행 방향은 위쪽으로만 전진
-    - 좌/우로만 꺾이는 하나의 외길
-    - 뒤로 내려가지 않고 자기 길과 교차하지 않음
-    - 구간이 진행될수록 직선 길이가 짧아져 코너가 더 자주 등장
+    자동 난이도 상승형 외길 생성:
+    - 초반은 길게, 후반은 짧게
+    - 구간이 진행될수록 코너 간격이 줄어듦
+    - 아래로 되돌아가지 않고 좌/우로만 꺾이는 하나의 외길
   */
   const pts=[{x:0,y:0}];
   let x=0;
   let y=0;
   const xLimit=190;
-  const cfg=diff[difficulty];
 
-  for(let i=0;i<220;i++){
-    const progress=Math.min(1,i/85);
-    const shrink=progress*cfg.cornerShrink;
+  for(let i=0;i<240;i++){
+    const progress=Math.min(1,i/90);
+    const shrink=progress*0.92;
 
-    // 진행될수록 위쪽 직선 길이가 짧아짐 = 코너가 더 빨리 나옴
-    const upBase=178 - shrink*72;
-    const upRand=75 - shrink*38;
-    const upMin=72 - shrink*12;
+    const upBase=190 - shrink*82;
+    const upRand=82 - shrink*42;
+    const upMin=76 - shrink*14;
     const upLen=Math.max(upMin, upBase + Math.random()*upRand);
     y-=upLen;
     pts.push({x,y});
@@ -243,10 +246,9 @@ function makePath(){
     else if(x < -xLimit*0.56) dir=1;
     else dir=Math.random()<0.5?-1:1;
 
-    // 수평 구간도 점점 짧아져 연속 코너 느낌 강화
-    const sideBase=150 - shrink*58;
-    const sideRand=85 - shrink*38;
-    const sideMin=72 - shrink*10;
+    const sideBase=158 - shrink*66;
+    const sideRand=88 - shrink*42;
+    const sideMin=74 - shrink*12;
     const sideLen=Math.max(sideMin, sideBase + Math.random()*sideRand);
 
     x+=dir*sideLen;
@@ -264,7 +266,8 @@ function segmentInfo(i){
 }
 
 function resetGame(){
-  const cfg=diff[difficulty];
+  stage="easy";
+  const cfg=stages.easy;
   path=makePath();
   currentSeg=0;
   score=0;
@@ -305,7 +308,12 @@ function loop(now){
 
 function update(dt){
   totalTime+=dt;
-  const cfg=diff[difficulty];
+  const nextStage=getStageByTime();
+  if(nextStage!==stage){
+    stage=nextStage;
+    showJudge(stages[stage].label);
+  }
+  const cfg=getCurrentCfg();
   speed+=cfg.accel*dt;
   distance+=speed*dt/10;
   score=Math.floor(distance*3+totalTime*8+(speed-120)*0.45);
@@ -382,7 +390,7 @@ function getNextCornerInfo(){
 
 function tap(){
   if(!running)return;
-  const cfg=diff[difficulty];
+  const cfg=getCurrentCfg();
   const info=getNextCornerInfo();
   if(!info)return;
   const d=info.dist;
@@ -618,6 +626,7 @@ function drawParticles(){
 function updateTexts(){
   scoreText.textContent=score.toLocaleString();
   bestText.textContent=best.toLocaleString();
+  stageText.textContent=stages[stage].label;
 }
 
 tapZone.addEventListener("pointerdown",e=>{
@@ -630,11 +639,7 @@ homeBtn.addEventListener("click",()=>{
   resultOverlay.classList.add("hidden");
   startOverlay.classList.remove("hidden");
 });
-document.querySelectorAll(".diff-btn").forEach(btn=>btn.addEventListener("click",()=>{
-  difficulty=btn.dataset.diff;
-  document.querySelectorAll(".diff-btn").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
-}));
+
 document.addEventListener("visibilitychange",()=>{
   if(document.hidden&&running)crash();
 });
