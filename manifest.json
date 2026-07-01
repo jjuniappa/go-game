@@ -1,7 +1,7 @@
 {
-  "name": "모바일 바둑 10x10",
-  "short_name": "바둑10",
-  "description": "사람 대국과 AI 대국을 지원하는 10x10 모바일 바둑 게임",
+  "name": "모바일 바둑 교차점",
+  "short_name": "바둑",
+  "description": "줄과 줄의 교차점에 착수하는 모바일 바둑 게임",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#d9a441" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="모바일 바둑 10" />
+  <meta name="apple-mobile-web-app-title" content="모바일 바둑" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
 
-  <title>모바일 바둑 10×10</title>
+  <title>모바일 바둑 - 교차점 터치</title>
 
   <style>
     :root {
@@ -177,6 +177,7 @@
       touch-action: manipulation;
       user-select: none;
       overflow: hidden;
+      cursor: pointer;
     }
 
     .grid-line {
@@ -212,25 +213,21 @@
       z-index: 2;
     }
 
-    .point {
+    .touch-preview {
       position: absolute;
-      width: 9.2%;
-      height: 9.2%;
-      border: 0;
+      width: 8.2%;
+      height: 8.2%;
       border-radius: 999px;
-      background: transparent;
       transform: translate(-50%, -50%);
-      cursor: pointer;
       z-index: 4;
-      padding: 0;
+      pointer-events: none;
+      background: rgba(192, 0, 1, 0.22);
+      border: 2px solid rgba(192, 0, 1, 0.75);
+      display: none;
     }
 
-    .point:active::after {
-      content: "";
-      position: absolute;
-      inset: 24%;
-      border-radius: 999px;
-      background: rgba(192, 0, 1, 0.42);
+    .touch-preview.show {
+      display: block;
     }
 
     .stone {
@@ -363,34 +360,6 @@
       opacity: 1;
     }
 
-    .install-hint {
-      display: none;
-      position: fixed;
-      left: 12px;
-      right: 12px;
-      bottom: calc(76px + env(safe-area-inset-bottom));
-      background: rgba(20, 20, 20, 0.94);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 16px;
-      padding: 12px 13px;
-      z-index: 25;
-      font-size: 13px;
-      line-height: 1.45;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    }
-
-    .install-hint button {
-      margin-top: 8px;
-      width: 100%;
-      background: var(--accent);
-    }
-
-    @media (display-mode: standalone) {
-      .title p::after {
-        content: " · 앱 실행 중";
-      }
-    }
-
     @media (min-width: 900px) {
       body {
         max-width: 940px;
@@ -446,7 +415,7 @@
   <header class="topbar">
     <div class="title">
       <h1>모바일 바둑 10×10</h1>
-      <p>큰 칸 · 사람 대국 / AI 대국</p>
+      <p>교차점 기준 터치 방식</p>
     </div>
 
     <div class="turn-badge">
@@ -476,7 +445,9 @@
   </section>
 
   <main class="board-area">
-    <div id="board" class="board" aria-label="10x10 바둑판"></div>
+    <div id="board" class="board" aria-label="10x10 바둑판">
+      <div id="touchPreview" class="touch-preview"></div>
+    </div>
   </main>
 
   <section class="bottom-panel">
@@ -493,12 +464,6 @@
     </div>
   </section>
 
-  <div id="installHint" class="install-hint">
-    안드로이드는 Chrome 메뉴에서 <b>홈 화면에 추가</b>를 누르면 앱처럼 설치됩니다.<br>
-    아이폰은 Safari 공유 버튼 → <b>홈 화면에 추가</b>를 누르세요.
-    <button id="closeHintBtn">확인</button>
-  </div>
-
   <div id="thinking" class="thinking">
     <div class="thinking-box">AI 생각 중...</div>
   </div>
@@ -513,14 +478,18 @@
     const HUMAN_MODE = "human";
     const AI_MODE = "ai";
 
+    // 선 시작/끝 위치와 반드시 동일해야 함.
+    const BOARD_MARGIN_PERCENT = 8;
+    const BOARD_SPAN_PERCENT = 84;
+
     const boardEl = document.getElementById("board");
+    const touchPreviewEl = document.getElementById("touchPreview");
     const turnStoneEl = document.getElementById("turnStone");
     const turnTextEl = document.getElementById("turnText");
     const blackCapturesEl = document.getElementById("blackCaptures");
     const whiteCapturesEl = document.getElementById("whiteCaptures");
     const moveCountEl = document.getElementById("moveCount");
     const toastEl = document.getElementById("toast");
-    const installHintEl = document.getElementById("installHint");
     const thinkingEl = document.getElementById("thinking");
     const modeHumanBtn = document.getElementById("modeHumanBtn");
     const modeAiBtn = document.getElementById("modeAiBtn");
@@ -536,6 +505,7 @@
     let previousHash = null;
     let history = [];
     let toastTimer = null;
+    let previewTimer = null;
     let mode = HUMAN_MODE;
     let playerColor = BLACK;
     let aiColor = WHITE;
@@ -555,11 +525,11 @@
     }
 
     function posToPercent(i) {
-      return 8 + (i / (SIZE - 1)) * 84;
+      return BOARD_MARGIN_PERCENT + (i / (SIZE - 1)) * BOARD_SPAN_PERCENT;
     }
 
     function renderStaticBoard() {
-      boardEl.innerHTML = "";
+      [...boardEl.querySelectorAll(".grid-line, .star")].forEach(el => el.remove());
 
       for (let i = 0; i < SIZE; i++) {
         const h = document.createElement("div");
@@ -573,29 +543,72 @@
         boardEl.appendChild(v);
       }
 
-      const stars = [2, 5, 7];
-      for (const r of stars) {
-        for (const c of stars) {
-          if ((r === 5 && c === 2) || (r === 2 && c === 5) || (r === 5 && c === 7) || (r === 7 && c === 5)) continue;
-          const s = document.createElement("div");
-          s.className = "star";
-          s.style.top = `${posToPercent(r)}%`;
-          s.style.left = `${posToPercent(c)}%`;
-          boardEl.appendChild(s);
-        }
+      const stars = [[2,2], [2,7], [7,2], [7,7], [5,5]];
+      for (const [r, c] of stars) {
+        const s = document.createElement("div");
+        s.className = "star";
+        s.style.top = `${posToPercent(r)}%`;
+        s.style.left = `${posToPercent(c)}%`;
+        boardEl.appendChild(s);
+      }
+    }
+
+    function getNearestIntersectionFromPointer(event) {
+      const rect = boardEl.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      const margin = rect.width * (BOARD_MARGIN_PERCENT / 100);
+      const span = rect.width * (BOARD_SPAN_PERCENT / 100);
+      const cell = span / (SIZE - 1);
+
+      const rawC = (x - margin) / cell;
+      const rawR = (y - margin) / cell;
+      const c = Math.round(rawC);
+      const r = Math.round(rawR);
+
+      if (!inBounds(r, c)) return null;
+
+      const ix = margin + c * cell;
+      const iy = margin + r * cell;
+      const distance = Math.hypot(x - ix, y - iy);
+
+      // 교차점에서 너무 멀리 떨어진 터치는 무시.
+      // 손가락 터치를 고려해 한 칸의 48% 이내만 인정.
+      if (distance > cell * 0.48) return null;
+
+      return { r, c, xPercent: posToPercent(c), yPercent: posToPercent(r) };
+    }
+
+    function showTouchPreview(point) {
+      clearTimeout(previewTimer);
+      touchPreviewEl.style.left = `${point.xPercent}%`;
+      touchPreviewEl.style.top = `${point.yPercent}%`;
+      touchPreviewEl.classList.add("show");
+      previewTimer = setTimeout(() => {
+        touchPreviewEl.classList.remove("show");
+      }, 180);
+    }
+
+    function handleBoardPointer(event) {
+      event.preventDefault();
+
+      if (aiBusy) return;
+
+      if (mode === AI_MODE && turn === aiColor) {
+        showToast("AI 차례입니다.");
+        return;
       }
 
-      for (let r = 0; r < SIZE; r++) {
-        for (let c = 0; c < SIZE; c++) {
-          const p = document.createElement("button");
-          p.className = "point";
-          p.style.top = `${posToPercent(r)}%`;
-          p.style.left = `${posToPercent(c)}%`;
-          p.setAttribute("aria-label", `${r + 1}행 ${c + 1}열`);
-          p.addEventListener("click", () => handlePointClick(r, c));
-          boardEl.appendChild(p);
-        }
+      const point = getNearestIntersectionFromPointer(event);
+
+      if (!point) {
+        showToast("줄 교차점 가까이를 눌러주세요.");
+        return;
       }
+
+      showTouchPreview(point);
+      playMove(point.r, point.c, { byAI: false });
     }
 
     function renderStones() {
@@ -698,17 +711,6 @@
       if (history.length > 120) history.shift();
     }
 
-    function handlePointClick(r, c) {
-      if (aiBusy) return;
-
-      if (mode === AI_MODE && turn === aiColor) {
-        showToast("AI 차례입니다.");
-        return;
-      }
-
-      playMove(r, c, { byAI: false });
-    }
-
     function playMove(r, c, options = {}) {
       const byAI = options.byAI || false;
 
@@ -734,7 +736,6 @@
       moveCount++;
       previousHash = beforeHash;
 
-      const movedColor = turn;
       turn = opponent(turn);
 
       if (result.captured > 0) {
@@ -851,17 +852,13 @@
       let score = 0;
       const enemy = opponent(aiColor);
 
-      // 1. 바로 잡는 수
       score += result.captured * 1000;
-
-      // 2. 착수 후 내 그룹 안전도
       score += result.liberties * 45;
       score += Math.min(result.groupSize, 5) * 18;
 
       if (result.liberties === 1) score -= 180;
       if (result.liberties === 2) score -= 25;
 
-      // 3. 내 단수 그룹 구출 / 연결
       for (const [nr, nc] of neighbors(r, c)) {
         if (board[nr][nc] === aiColor) {
           const g = getGroupFromBoard(nr, nc, board);
@@ -869,10 +866,7 @@
           if (g.liberties.size === 2) score += 130;
           score += 55;
         }
-      }
 
-      // 4. 상대 단수 잡기 / 압박
-      for (const [nr, nc] of neighbors(r, c)) {
         if (board[nr][nc] === enemy) {
           const g = getGroupFromBoard(nr, nc, board);
           if (g.liberties.size === 1) score += 700;
@@ -881,21 +875,17 @@
         }
       }
 
-      // 5. 이 수를 둔 뒤 상대가 바로 크게 따낼 수 있으면 감점
       const counterLoss = estimateBestCapture(result.board, enemy);
       score -= counterLoss * 620;
 
-      // 6. 상대가 다음에 잡을 수 있는 내 단수 그룹을 줄이면 가점
       const dangerBefore = countGroupsInAtari(board, aiColor);
       const dangerAfter = countGroupsInAtari(result.board, aiColor);
       score += (dangerBefore - dangerAfter) * 280;
 
-      // 7. 상대 단수 그룹을 늘리면 가점
       const enemyAtariBefore = countGroupsInAtari(board, enemy);
       const enemyAtariAfter = countGroupsInAtari(result.board, enemy);
       score += (enemyAtariAfter - enemyAtariBefore) * 180;
 
-      // 8. 10x10에서는 중앙/3선이 유리. 너무 가장자리만 두는 것 방지
       const center = (SIZE - 1) / 2;
       const distCenter = Math.abs(r - center) + Math.abs(c - center);
       score += Math.max(0, 28 - distCenter * 5);
@@ -905,7 +895,6 @@
       if (edgeDistance === 1) score += moveCount < 45 ? 12 : 4;
       if (edgeDistance === 2) score += 28;
 
-      // 9. 화점 근처 선호
       const starPoints = [[2,2], [2,7], [7,2], [7,7], [5,5]];
       let nearestStar = 99;
       for (const [sr, sc] of starPoints) {
@@ -913,13 +902,11 @@
       }
       score += Math.max(0, 32 - nearestStar * 9);
 
-      // 10. 대각선 아군 모양도 약간 선호
       for (const [nr, nc] of diagonalNeighbors(r, c)) {
         if (board[nr][nc] === aiColor) score += 18;
         if (board[nr][nc] === enemy) score += 6;
       }
 
-      // 11. 초반에는 이미 둔 돌 주변으로 모양 만들기
       if (moveCount < 30) {
         const friendlyNear = countNearbyStones(r, c, aiColor, 2);
         const enemyNear = countNearbyStones(r, c, enemy, 2);
@@ -1039,7 +1026,7 @@
       history = [];
       aiBusy = false;
       thinkingEl.classList.remove("show");
-      localStorage.removeItem("mobile-go-state-10x10-v1");
+      localStorage.removeItem("mobile-go-state-intersection-v1");
       showToast("새 판을 시작합니다.");
       renderStones();
 
@@ -1143,11 +1130,11 @@
         aiColor,
         aiLevel
       };
-      localStorage.setItem("mobile-go-state-10x10-v1", JSON.stringify(state));
+      localStorage.setItem("mobile-go-state-intersection-v1", JSON.stringify(state));
     }
 
     function loadState() {
-      const raw = localStorage.getItem("mobile-go-state-10x10-v1");
+      const raw = localStorage.getItem("mobile-go-state-intersection-v1");
       if (!raw) return false;
 
       try {
@@ -1183,21 +1170,12 @@
       }, 1300);
     }
 
-    function maybeShowInstallHint() {
-      const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
-      const dismissed = localStorage.getItem("mobile-go-install-hint-dismissed") === "1";
-
-      if (!standalone && !dismissed) {
-        setTimeout(() => {
-          installHintEl.style.display = "block";
-        }, 800);
-      }
-    }
-
     modeHumanBtn.addEventListener("click", () => setMode(HUMAN_MODE));
     modeAiBtn.addEventListener("click", () => setMode(AI_MODE));
     playerColorSelect.addEventListener("change", changeAIOption);
     aiLevelSelect.addEventListener("change", changeAIOption);
+
+    boardEl.addEventListener("pointerdown", handleBoardPointer);
 
     document.getElementById("passBtn").addEventListener("click", () => {
       if (mode === AI_MODE && turn === aiColor) {
@@ -1210,11 +1188,6 @@
     document.getElementById("undoBtn").addEventListener("click", undo);
     document.getElementById("resetBtn").addEventListener("click", () => resetGame(false));
     document.getElementById("scoreBtn").addEventListener("click", simpleScore);
-
-    document.getElementById("closeHintBtn").addEventListener("click", () => {
-      installHintEl.style.display = "none";
-      localStorage.setItem("mobile-go-install-hint-dismissed", "1");
-    });
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
@@ -1239,7 +1212,6 @@
     }
 
     renderStones();
-    maybeShowInstallHint();
 
     if (mode === AI_MODE && turn === aiColor) {
       scheduleAIMove();
