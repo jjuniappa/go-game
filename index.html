@@ -34,15 +34,28 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 .sub-btn{background:#2d2d2d;font-size:14px;padding:12px}
 .howto{margin-top:12px;color:#999;font-size:12px;line-height:1.55}
 .vehicle-title{margin:16px 0 8px;font-size:13px;color:#ddd;font-weight:900}
-.vehicle-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:8px}
-.vehicle-btn{height:62px;border-radius:15px;border:1px solid rgba(255,255,255,.10);background:#242424;color:#fff;font-weight:900;font-size:10px;display:grid;grid-template-rows:1fr auto;align-items:center;justify-items:center;padding:6px 3px;cursor:pointer}
-.vehicle-btn.active{border-color:#c00001;background:rgba(192,0,1,.22);box-shadow:0 0 0 1px rgba(192,0,1,.55),0 0 18px rgba(192,0,1,.18)}
-.vehicle-icon{width:34px;height:24px;position:relative}
-.vehicle-icon.car{border-radius:7px;background:#f3f3f3}.vehicle-icon.car:after{content:"";position:absolute;left:10px;top:5px;width:15px;height:13px;border-radius:4px;background:#c00001}
-.vehicle-icon.super{border-radius:13px 13px 11px 11px;background:linear-gradient(180deg,#2d7dff 0%,#183f8f 100%);clip-path:polygon(14% 100%,6% 72%,10% 38%,26% 14%,74% 14%,90% 38%,94% 72%,86% 100%)}.vehicle-icon.super:before{content:"";position:absolute;left:11px;top:4px;width:12px;height:16px;border-radius:7px 7px 5px 5px;background:#10151f}.vehicle-icon.super:after{content:"";position:absolute;left:13px;top:2px;width:8px;height:6px;border:2px solid #d7eefc;border-bottom:none;border-radius:8px 8px 0 0}
-.vehicle-icon.truck{clip-path:polygon(6% 82%,16% 24%,76% 10%,96% 30%,88% 82%);background:linear-gradient(180deg,#bfc4c8 0%,#6f757b 100%)}.vehicle-icon.truck:before{content:"";position:absolute;left:11px;top:8px;width:12px;height:6px;background:#151515;transform:skewX(-28deg);opacity:.9}.vehicle-icon.truck:after{content:"";position:absolute;left:6px;bottom:2px;width:22px;height:2px;background:rgba(255,255,255,.45)}
-.vehicle-icon.bike{height:20px}.vehicle-icon.bike:before,.vehicle-icon.bike:after{content:"";position:absolute;bottom:0;width:12px;height:12px;border-radius:50%;border:3px solid #f4f4f4}.vehicle-icon.bike:before{left:1px}.vehicle-icon.bike:after{right:1px}.vehicle-icon.bike span{position:absolute;left:12px;top:5px;width:12px;height:6px;background:#c00001;border-radius:999px}
-.vehicle-icon.taxi{border-radius:7px;background:#ffd35f}.vehicle-icon.taxi:after{content:"TAXI";position:absolute;left:5px;top:7px;color:#111;font-size:7px;font-weight:1000}
+.vehicle-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:10px 0 8px}
+.vehicle-card{border:2px solid rgba(255,255,255,.08);border-radius:22px;background:#f8f8fa;color:#111;padding:18px 16px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;min-height:308px;transition:.15s ease}
+.vehicle-card.active{border-color:#2f6df6;box-shadow:0 0 0 3px rgba(47,109,246,.08);position:relative}
+.vehicle-card.active:after{content:"✓";position:absolute;right:14px;top:14px;width:26px;height:26px;border-radius:50%;background:#2f6df6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:1000}
+.vehicle-preview{width:100%;height:170px;position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.vehicle-name{font-size:24px;font-weight:1000;line-height:1.1;color:#111827;margin:2px 0 8px}
+.vehicle-desc{font-size:13px;color:#6b7280;text-align:center;line-height:1.45}
+.preview-car{position:relative;width:300px;height:118px;transform:rotate(-90deg) scale(.82)}
+.preview-basic .body{position:absolute;inset:0;border-radius:34px;background:linear-gradient(180deg,#fefefe 0%,#d9d9dc 100%);box-shadow:inset 0 0 0 2px rgba(0,0,0,.07),0 14px 24px rgba(0,0,0,.12)}
+.preview-basic .cockpit{position:absolute;left:88px;top:20px;width:124px;height:78px;border-radius:28px;background:linear-gradient(180deg,#0f1116 0%,#2b2f39 100%)}
+.preview-basic .glass-front,.preview-basic .glass-back{position:absolute;left:103px;width:95px;height:22px;border-radius:14px;background:rgba(255,255,255,.18)}
+.preview-basic .glass-front{top:24px}.preview-basic .glass-back{bottom:24px}
+.preview-basic .accent-front,.preview-basic .accent-back{position:absolute;right:8px;width:10px;height:22px;border-radius:0 10px 10px 0;background:#ff4d4d}.preview-basic .accent-front{top:18px}.preview-basic .accent-back{bottom:18px}
+.preview-basic .mirror-l,.preview-basic .mirror-r{position:absolute;top:49px;width:12px;height:22px;border-radius:9px;background:#efefef;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.preview-basic .mirror-l{left:36px}.preview-basic .mirror-r{right:36px}
+.preview-super .body{position:absolute;inset:0;border-radius:44px;background:linear-gradient(180deg,#ff342e 0%,#a30608 100%);clip-path:polygon(18% 100%,8% 84%,4% 60%,7% 31%,16% 9%,84% 9%,93% 31%,96% 60%,92% 84%,82% 100%);box-shadow:0 18px 24px rgba(0,0,0,.18)}
+.preview-super .cockpit{position:absolute;left:76px;top:18px;width:148px;height:82px;background:linear-gradient(180deg,#05070a 0%,#1a1f28 100%);clip-path:polygon(18% 0,82% 0,100% 28%,94% 100%,6% 100%,0 28%)}
+.preview-super .spine{position:absolute;left:148px;top:7px;width:7px;height:102px;border-radius:7px;background:rgba(255,255,255,.16)}
+.preview-super .grille{position:absolute;left:132px;top:2px;width:36px;height:22px;border:2px solid #d9ebff;border-bottom-left-radius:14px;border-bottom-right-radius:14px;border-top-left-radius:18px;border-top-right-radius:18px;background:#141414}
+.preview-super .vent-l,.preview-super .vent-r{position:absolute;top:23px;width:22px;height:8px;background:#111;border-radius:10px}.preview-super .vent-l{left:34px}.preview-super .vent-r{right:34px}
+.preview-super .tail-l,.preview-super .tail-r{position:absolute;bottom:18px;width:22px;height:8px;background:#111;border-radius:10px}.preview-super .tail-l{left:38px}.preview-super .tail-r{right:38px}
+@media (max-width:640px){.vehicle-grid{grid-template-columns:1fr}.vehicle-card{min-height:290px}.vehicle-preview{height:150px}.preview-car{transform:rotate(-90deg) scale(.72)}}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
 .stat{background:#222;border:1px solid rgba(255,255,255,.08);border-radius:15px;padding:12px}
 .stat small{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}
@@ -79,17 +92,44 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 
     <div class="vehicle-title">차량 선택</div>
     <div class="vehicle-grid">
-      <button class="vehicle-btn active" data-vehicle="basic"><div class="vehicle-icon car"></div><span>기본차</span></button>
-      <button class="vehicle-btn" data-vehicle="super"><div class="vehicle-icon super"></div><span>부가티</span></button>
-      <button class="vehicle-btn" data-vehicle="truck"><div class="vehicle-icon truck"></div><span>사이버트럭</span></button>
-      <button class="vehicle-btn" data-vehicle="bike"><div class="vehicle-icon bike"><span></span></div><span>오토바이</span></button>
-      <button class="vehicle-btn" data-vehicle="taxi"><div class="vehicle-icon taxi"></div><span>택시</span></button>
+      <button class="vehicle-card active" data-vehicle="basic" type="button">
+        <div class="vehicle-preview">
+          <div class="preview-car preview-basic">
+            <div class="body"></div>
+            <div class="cockpit"></div>
+            <div class="glass-front"></div>
+            <div class="glass-back"></div>
+            <div class="accent-front"></div>
+            <div class="accent-back"></div>
+            <div class="mirror-l"></div>
+            <div class="mirror-r"></div>
+          </div>
+        </div>
+        <div class="vehicle-name">기본차</div>
+        <div class="vehicle-desc">일반적인 승용차 형태로 표시됩니다.</div>
+      </button>
+      <button class="vehicle-card" data-vehicle="super" type="button">
+        <div class="vehicle-preview">
+          <div class="preview-car preview-super">
+            <div class="body"></div>
+            <div class="cockpit"></div>
+            <div class="spine"></div>
+            <div class="grille"></div>
+            <div class="vent-l"></div>
+            <div class="vent-r"></div>
+            <div class="tail-l"></div>
+            <div class="tail-r"></div>
+          </div>
+        </div>
+        <div class="vehicle-name" style="color:#2f6df6">슈퍼카</div>
+        <div class="vehicle-desc">고성능 슈퍼카 형태로 표시됩니다.</div>
+      </button>
     </div>
 
     <button id="startBtn" class="btn">게임 시작</button>
     <div class="howto">
       조작법: 화면 아무 곳이나 터치 = 90도 방향 전환<br>
-      부가티·사이버트럭을 포함한 모든 차량은 외형만 다르고, 성능과 충돌 판정은 동일합니다.
+      기능은 동일하고 표시만 달라집니다.
     </div>
   </div>
 </section>
@@ -132,6 +172,7 @@ let W=0,H=0,dpr=1;
 let running=false,raf=null,last=0;
 let best=Number(localStorage.getItem("tap-drift-vehicle-best")||0);
 let selectedVehicle=localStorage.getItem("tap-drift-vehicle")||"basic";
+if(!["basic","super"].includes(selectedVehicle)) selectedVehicle="basic";
 let car,path,currentSeg,camera,score,distance,speed,roadWidth,totalTime,stage;
 let particles=[];
 
@@ -409,9 +450,6 @@ function drawVehicle(){
   ctx.shadowBlur=9;
 
   if(selectedVehicle==="super") drawSuperCar();
-  else if(selectedVehicle==="truck") drawTruck();
-  else if(selectedVehicle==="bike") drawBike();
-  else if(selectedVehicle==="taxi") drawTaxi();
   else drawBasicCar();
 
   ctx.restore();
@@ -484,91 +522,6 @@ function drawSuperCar(){
   ctx.fillRect(8,13,3,1.8);
 }
 
-function drawTruck(){
-  // Cybertruck-inspired top view
-  ctx.fillStyle="#b7bcc2";
-  ctx.beginPath();
-  ctx.moveTo(0,-16);
-  ctx.lineTo(14,-10);
-  ctx.lineTo(18,0);
-  ctx.lineTo(14,12);
-  ctx.lineTo(-8,16);
-  ctx.lineTo(-17,8);
-  ctx.lineTo(-19,-2);
-  ctx.lineTo(-11,-13);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle="#6d737a";
-  ctx.beginPath();
-  ctx.moveTo(-4,-9);
-  ctx.lineTo(8,-6);
-  ctx.lineTo(11,1);
-  ctx.lineTo(8,8);
-  ctx.lineTo(-6,10);
-  ctx.lineTo(-11,5);
-  ctx.lineTo(-12,-2);
-  ctx.lineTo(-8,-8);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.strokeStyle="rgba(255,255,255,.55)";
-  ctx.lineWidth=1;
-  ctx.beginPath();
-  ctx.moveTo(-8,-12);
-  ctx.lineTo(13,-4);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(-13,12);
-  ctx.lineTo(12,8);
-  ctx.stroke();
-
-  ctx.fillStyle="#e9edf2";
-  ctx.fillRect(11,-1,6,2);
-  ctx.fillStyle="#ff4d4d";
-  ctx.fillRect(-17,-1,5,2);
-
-  ctx.fillStyle="#151515";
-  ctx.fillRect(-15,-14,6,4);
-  ctx.fillRect(-16,10,6,4);
-  ctx.fillRect(9,-9,6,4);
-  ctx.fillRect(10,7,6,4);
-}
-
-function drawBike(){
-  ctx.strokeStyle="#f4f4f4";
-  ctx.lineWidth=3;
-  ctx.beginPath();
-  ctx.arc(-10,8,5,0,Math.PI*2);
-  ctx.arc(10,8,5,0,Math.PI*2);
-  ctx.stroke();
-  ctx.fillStyle="#c00001";
-  roundRect(ctx,-8,-4,18,8,4);
-  ctx.fill();
-  ctx.strokeStyle="#f4f4f4";
-  ctx.lineWidth=2;
-  ctx.beginPath();
-  ctx.moveTo(6,-3);
-  ctx.lineTo(15,-10);
-  ctx.stroke();
-}
-
-function drawTaxi(){
-  ctx.fillStyle="#ffd35f";
-  roundRect(ctx,-carLength/2,-carWidth/2,carLength,carWidth,5);
-  ctx.fill();
-  ctx.fillStyle="#111";
-  roundRect(ctx,-7,-7,15,14,4);
-  ctx.fill();
-  ctx.fillStyle="#fff";
-  ctx.font="bold 7px system-ui";
-  ctx.textAlign="center";
-  ctx.textBaseline="middle";
-  ctx.fillText("TAXI",-6,0);
-  drawWheels();
-  drawHeadlights();
-}
-
 function drawWheels(){
   ctx.fillStyle="#151515";
   ctx.fillRect(-13,-14,7,4);
@@ -605,12 +558,12 @@ function updateTexts(){
 }
 
 function refreshVehicleButtons(){
-  document.querySelectorAll(".vehicle-btn").forEach(btn=>{
+  document.querySelectorAll(".vehicle-card").forEach(btn=>{
     btn.classList.toggle("active",btn.dataset.vehicle===selectedVehicle);
   });
 }
 
-document.querySelectorAll(".vehicle-btn").forEach(btn=>{
+document.querySelectorAll(".vehicle-card").forEach(btn=>{
   btn.addEventListener("click",()=>{
     selectedVehicle=btn.dataset.vehicle;
     localStorage.setItem("tap-drift-vehicle",selectedVehicle);

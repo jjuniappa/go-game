@@ -1,7 +1,7 @@
 {
   "name": "Tap Drift",
   "short_name": "TapDrift",
-  "description": "부가티와 사이버트럭 디자인이 반영된 차량 선택 Tap Drift",
+  "description": "기본차와 슈퍼카 두 가지 선택만 제공하는 Tap Drift",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
