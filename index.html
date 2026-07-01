@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#d9a441" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="모바일 바둑" />
+  <meta name="apple-mobile-web-app-title" content="모바일 바둑 10" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
 
-  <title>모바일 바둑</title>
+  <title>모바일 바둑 10×10</title>
 
   <style>
     :root {
@@ -22,7 +22,6 @@
       --muted: #aaa;
       --accent: #c00001;
       --panel: #141414;
-      --soft: #242424;
     }
 
     * {
@@ -161,16 +160,16 @@
       flex: 1;
       display: grid;
       place-items: center;
-      padding: 10px;
+      padding: 8px;
       min-height: 0;
     }
 
     .board {
       position: relative;
-      width: min(96vw, 88dvh, 760px);
+      width: min(97vw, 82dvh, 720px);
       aspect-ratio: 1 / 1;
       background: var(--board);
-      border-radius: 10px;
+      border-radius: 12px;
       box-shadow:
         inset 0 0 0 4px rgba(85, 45, 11, 0.18),
         inset 0 0 28px rgba(80, 43, 7, 0.26),
@@ -183,29 +182,29 @@
     .grid-line {
       position: absolute;
       background: var(--line);
-      opacity: 0.86;
+      opacity: 0.88;
       pointer-events: none;
       z-index: 1;
     }
 
     .grid-line.h {
-      height: 1.2px;
-      left: 5.2631578947%;
-      right: 5.2631578947%;
+      height: 1.5px;
+      left: 8%;
+      right: 8%;
       transform: translateY(-50%);
     }
 
     .grid-line.v {
-      width: 1.2px;
-      top: 5.2631578947%;
-      bottom: 5.2631578947%;
+      width: 1.5px;
+      top: 8%;
+      bottom: 8%;
       transform: translateX(-50%);
     }
 
     .star {
       position: absolute;
-      width: 7px;
-      height: 7px;
+      width: 8px;
+      height: 8px;
       border-radius: 999px;
       background: var(--line);
       transform: translate(-50%, -50%);
@@ -215,8 +214,8 @@
 
     .point {
       position: absolute;
-      width: 5.3%;
-      height: 5.3%;
+      width: 9.2%;
+      height: 9.2%;
       border: 0;
       border-radius: 999px;
       background: transparent;
@@ -229,15 +228,15 @@
     .point:active::after {
       content: "";
       position: absolute;
-      inset: 20%;
+      inset: 24%;
       border-radius: 999px;
       background: rgba(192, 0, 1, 0.42);
     }
 
     .stone {
       position: absolute;
-      width: 4.95%;
-      height: 4.95%;
+      width: 8.2%;
+      height: 8.2%;
       border-radius: 999px;
       transform: translate(-50%, -50%);
       z-index: 5;
@@ -258,8 +257,8 @@
 
     .last-move {
       position: absolute;
-      width: 1.45%;
-      height: 1.45%;
+      width: 2.3%;
+      height: 2.3%;
       border-radius: 999px;
       transform: translate(-50%, -50%);
       background: var(--accent);
@@ -431,7 +430,7 @@
       }
 
       .board {
-        width: min(96vw, 72dvh, 760px);
+        width: min(97vw, 69dvh, 720px);
       }
 
       button,
@@ -446,8 +445,8 @@
 <body>
   <header class="topbar">
     <div class="title">
-      <h1>모바일 바둑</h1>
-      <p>사람 대국 / AI 대국 지원</p>
+      <h1>모바일 바둑 10×10</h1>
+      <p>큰 칸 · 사람 대국 / AI 대국</p>
     </div>
 
     <div class="turn-badge">
@@ -471,12 +470,13 @@
       <select id="aiLevelSelect" aria-label="AI 난이도">
         <option value="easy">AI 초급</option>
         <option value="normal" selected>AI 보통</option>
+        <option value="hard">AI 강함</option>
       </select>
     </div>
   </section>
 
   <main class="board-area">
-    <div id="board" class="board" aria-label="바둑판"></div>
+    <div id="board" class="board" aria-label="10x10 바둑판"></div>
   </main>
 
   <section class="bottom-panel">
@@ -506,7 +506,7 @@
   <div id="toast" class="toast"></div>
 
   <script>
-    const SIZE = 19;
+    const SIZE = 10;
     const EMPTY = 0;
     const BLACK = 1;
     const WHITE = 2;
@@ -555,7 +555,7 @@
     }
 
     function posToPercent(i) {
-      return (i / (SIZE - 1)) * 89.4736842106 + 5.2631578947;
+      return 8 + (i / (SIZE - 1)) * 84;
     }
 
     function renderStaticBoard() {
@@ -573,9 +573,10 @@
         boardEl.appendChild(v);
       }
 
-      const stars = [3, 9, 15];
+      const stars = [2, 5, 7];
       for (const r of stars) {
         for (const c of stars) {
+          if ((r === 5 && c === 2) || (r === 2 && c === 5) || (r === 5 && c === 7) || (r === 7 && c === 5)) continue;
           const s = document.createElement("div");
           s.className = "star";
           s.style.top = `${posToPercent(r)}%`;
@@ -642,7 +643,11 @@
       return [[r-1,c], [r+1,c], [r,c-1], [r,c+1]].filter(([nr, nc]) => inBounds(nr, nc));
     }
 
-    function getGroup(r, c, targetBoard = board) {
+    function diagonalNeighbors(r, c) {
+      return [[r-1,c-1], [r-1,c+1], [r+1,c-1], [r+1,c+1]].filter(([nr, nc]) => inBounds(nr, nc));
+    }
+
+    function getGroupFromBoard(r, c, targetBoard) {
       const color = targetBoard[r][c];
       const visited = new Set();
       const stones = [];
@@ -714,7 +719,9 @@
 
       saveHistory();
 
+      const beforeHash = boardHash();
       const result = simulateMove(board, turn, r, c, previousHash);
+
       if (!result.ok) {
         history.pop();
         if (!byAI) showToast(result.reason);
@@ -725,7 +732,7 @@
       captures[turn] += result.captured;
       lastMove = { r, c };
       moveCount++;
-      previousHash = boardHash(history[history.length - 1].board);
+      previousHash = beforeHash;
 
       const movedColor = turn;
       turn = opponent(turn);
@@ -789,32 +796,6 @@
       };
     }
 
-    function getGroupFromBoard(r, c, targetBoard) {
-      const color = targetBoard[r][c];
-      const visited = new Set();
-      const stones = [];
-      const liberties = new Set();
-      const stack = [[r, c]];
-
-      while (stack.length) {
-        const [cr, cc] = stack.pop();
-        const key = `${cr},${cc}`;
-        if (visited.has(key)) continue;
-        visited.add(key);
-        stones.push([cr, cc]);
-
-        for (const [nr, nc] of neighbors(cr, cc)) {
-          if (targetBoard[nr][nc] === EMPTY) {
-            liberties.add(`${nr},${nc}`);
-          } else if (targetBoard[nr][nc] === color) {
-            stack.push([nr, nc]);
-          }
-        }
-      }
-
-      return { stones, liberties };
-    }
-
     function scheduleAIMove() {
       aiBusy = true;
       thinkingEl.classList.add("show");
@@ -831,7 +812,7 @@
 
         playMove(move.r, move.c, { byAI: true });
         aiBusy = false;
-      }, 420);
+      }, 450);
     }
 
     function chooseAIMove() {
@@ -854,65 +835,147 @@
       candidates.sort((a, b) => b.score - a.score);
 
       if (aiLevel === "easy") {
-        const topRange = candidates.slice(0, Math.min(candidates.length, 80));
+        const topRange = candidates.slice(0, Math.min(candidates.length, 20));
         return topRange[Math.floor(Math.random() * topRange.length)];
       }
 
-      const topRange = candidates.slice(0, Math.min(candidates.length, 12));
-      return topRange[Math.floor(Math.random() * topRange.length)];
+      if (aiLevel === "normal") {
+        const topRange = candidates.slice(0, Math.min(candidates.length, 6));
+        return topRange[Math.floor(Math.random() * topRange.length)];
+      }
+
+      return candidates[0];
     }
 
     function evaluateAIMove(r, c, result) {
       let score = 0;
+      const enemy = opponent(aiColor);
 
-      // 상대 돌을 따내는 수를 가장 선호
-      score += result.captured * 120;
+      // 1. 바로 잡는 수
+      score += result.captured * 1000;
 
-      // 내 돌의 활로가 너무 적은 곳은 회피
-      score += result.liberties * 8;
+      // 2. 착수 후 내 그룹 안전도
+      score += result.liberties * 45;
+      score += Math.min(result.groupSize, 5) * 18;
 
-      // 중앙보다 화점/귀/변 중심으로 초반 착수 유도
-      const starPoints = [
-        [3,3], [3,9], [3,15],
-        [9,3], [9,9], [9,15],
-        [15,3], [15,9], [15,15]
-      ];
+      if (result.liberties === 1) score -= 180;
+      if (result.liberties === 2) score -= 25;
 
+      // 3. 내 단수 그룹 구출 / 연결
+      for (const [nr, nc] of neighbors(r, c)) {
+        if (board[nr][nc] === aiColor) {
+          const g = getGroupFromBoard(nr, nc, board);
+          if (g.liberties.size === 1) score += 520;
+          if (g.liberties.size === 2) score += 130;
+          score += 55;
+        }
+      }
+
+      // 4. 상대 단수 잡기 / 압박
+      for (const [nr, nc] of neighbors(r, c)) {
+        if (board[nr][nc] === enemy) {
+          const g = getGroupFromBoard(nr, nc, board);
+          if (g.liberties.size === 1) score += 700;
+          if (g.liberties.size === 2) score += 210;
+          if (g.liberties.size === 3) score += 60;
+        }
+      }
+
+      // 5. 이 수를 둔 뒤 상대가 바로 크게 따낼 수 있으면 감점
+      const counterLoss = estimateBestCapture(result.board, enemy);
+      score -= counterLoss * 620;
+
+      // 6. 상대가 다음에 잡을 수 있는 내 단수 그룹을 줄이면 가점
+      const dangerBefore = countGroupsInAtari(board, aiColor);
+      const dangerAfter = countGroupsInAtari(result.board, aiColor);
+      score += (dangerBefore - dangerAfter) * 280;
+
+      // 7. 상대 단수 그룹을 늘리면 가점
+      const enemyAtariBefore = countGroupsInAtari(board, enemy);
+      const enemyAtariAfter = countGroupsInAtari(result.board, enemy);
+      score += (enemyAtariAfter - enemyAtariBefore) * 180;
+
+      // 8. 10x10에서는 중앙/3선이 유리. 너무 가장자리만 두는 것 방지
+      const center = (SIZE - 1) / 2;
+      const distCenter = Math.abs(r - center) + Math.abs(c - center);
+      score += Math.max(0, 28 - distCenter * 5);
+
+      const edgeDistance = Math.min(r, c, SIZE - 1 - r, SIZE - 1 - c);
+      if (edgeDistance === 0) score -= moveCount < 45 ? 55 : 10;
+      if (edgeDistance === 1) score += moveCount < 45 ? 12 : 4;
+      if (edgeDistance === 2) score += 28;
+
+      // 9. 화점 근처 선호
+      const starPoints = [[2,2], [2,7], [7,2], [7,7], [5,5]];
       let nearestStar = 99;
       for (const [sr, sc] of starPoints) {
         nearestStar = Math.min(nearestStar, Math.abs(r - sr) + Math.abs(c - sc));
       }
-      score += Math.max(0, 18 - nearestStar * 3);
+      score += Math.max(0, 32 - nearestStar * 9);
 
-      // 가장자리 너무 붙는 수는 초반에 약간 감점
-      const edgeDistance = Math.min(r, c, SIZE - 1 - r, SIZE - 1 - c);
-      if (moveCount < 40 && edgeDistance <= 1) score -= 12;
-
-      // 상대 단수 그룹을 잡는 수, 내 단수 탈출 느낌 가산
-      for (const [nr, nc] of neighbors(r, c)) {
-        if (board[nr][nc] === opponent(aiColor)) {
-          const g = getGroup(nr, nc, board);
-          if (g.liberties.size === 1) score += 80;
-          if (g.liberties.size === 2) score += 20;
-        }
-
-        if (board[nr][nc] === aiColor) {
-          const g = getGroup(nr, nc, board);
-          if (g.liberties.size === 1) score += 55;
-          if (g.liberties.size === 2) score += 15;
-        }
+      // 10. 대각선 아군 모양도 약간 선호
+      for (const [nr, nc] of diagonalNeighbors(r, c)) {
+        if (board[nr][nc] === aiColor) score += 18;
+        if (board[nr][nc] === enemy) score += 6;
       }
 
-      // 주변 아군과 연결 선호
-      for (const [nr, nc] of neighbors(r, c)) {
-        if (board[nr][nc] === aiColor) score += 12;
-        if (board[nr][nc] === opponent(aiColor)) score += 5;
+      // 11. 초반에는 이미 둔 돌 주변으로 모양 만들기
+      if (moveCount < 30) {
+        const friendlyNear = countNearbyStones(r, c, aiColor, 2);
+        const enemyNear = countNearbyStones(r, c, enemy, 2);
+        score += friendlyNear * 24;
+        score += enemyNear * 8;
       }
 
-      // 완전 랜덤성
-      score += Math.random() * 16;
-
+      score += Math.random() * (aiLevel === "hard" ? 2 : 18);
       return score;
+    }
+
+    function estimateBestCapture(targetBoard, color) {
+      let best = 0;
+
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (targetBoard[r][c] !== EMPTY) continue;
+          const result = simulateMove(targetBoard, color, r, c, null);
+          if (result.ok) best = Math.max(best, result.captured);
+        }
+      }
+
+      return best;
+    }
+
+    function countGroupsInAtari(targetBoard, color) {
+      const visited = new Set();
+      let count = 0;
+
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (targetBoard[r][c] !== color) continue;
+          const key = `${r},${c}`;
+          if (visited.has(key)) continue;
+
+          const g = getGroupFromBoard(r, c, targetBoard);
+          g.stones.forEach(([gr, gc]) => visited.add(`${gr},${gc}`));
+
+          if (g.liberties.size === 1) count++;
+        }
+      }
+
+      return count;
+    }
+
+    function countNearbyStones(r, c, color, radius) {
+      let count = 0;
+
+      for (let nr = Math.max(0, r - radius); nr <= Math.min(SIZE - 1, r + radius); nr++) {
+        for (let nc = Math.max(0, c - radius); nc <= Math.min(SIZE - 1, c + radius); nc++) {
+          if (nr === r && nc === c) continue;
+          if (board[nr][nc] === color) count++;
+        }
+      }
+
+      return count;
     }
 
     function passTurn(options = {}) {
@@ -976,7 +1039,7 @@
       history = [];
       aiBusy = false;
       thinkingEl.classList.remove("show");
-      localStorage.removeItem("mobile-go-state-v2");
+      localStorage.removeItem("mobile-go-state-10x10-v1");
       showToast("새 판을 시작합니다.");
       renderStones();
 
@@ -1080,11 +1143,11 @@
         aiColor,
         aiLevel
       };
-      localStorage.setItem("mobile-go-state-v2", JSON.stringify(state));
+      localStorage.setItem("mobile-go-state-10x10-v1", JSON.stringify(state));
     }
 
     function loadState() {
-      const raw = localStorage.getItem("mobile-go-state-v2");
+      const raw = localStorage.getItem("mobile-go-state-10x10-v1");
       if (!raw) return false;
 
       try {

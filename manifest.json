@@ -1,7 +1,7 @@
 {
-  "name": "모바일 바둑",
-  "short_name": "바둑",
-  "description": "사람 대국과 AI 대국을 지원하는 19x19 모바일 바둑 게임",
+  "name": "모바일 바둑 10x10",
+  "short_name": "바둑10",
+  "description": "사람 대국과 AI 대국을 지원하는 10x10 모바일 바둑 게임",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

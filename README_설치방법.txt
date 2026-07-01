@@ -1,21 +1,27 @@
-모바일 바둑 PWA AI 버전
+모바일 바둑 10x10 AI 개선 버전
 
 업데이트 내용:
-- 사람 vs 사람 모드
-- 사람 vs AI 모드
-- 내가 흑 / 내가 백 선택
-- AI 초급 / AI 보통 선택
-- 자동 저장
-- 홈 화면 추가 실행
+- 19x19에서 10x10으로 변경
+- 모바일에서 착수하기 쉽게 칸과 바둑알 크기 확대
+- AI 개선
+  - 따냄 우선
+  - 단수 탈출
+  - 상대 단수 공격
+  - 상대의 다음 따냄 위험 회피
+  - 중앙/3선/연결 선호
+- AI 난이도: 초급 / 보통 / 강함
+- 사람 vs 사람 / 사람 vs AI 모드 유지
+- 자동 저장 유지
 
-GitHub Pages 업로드 방법:
+GitHub 업로드 방법:
 1. 이 ZIP 압축을 풉니다.
-2. 기존 go-game 저장소에 들어갑니다.
-3. index.html, manifest.json, service-worker.js, icons 폴더를 기존 파일 위에 덮어쓰듯 업로드합니다.
+2. 기존 go-game 저장소에서 Add file > Upload files를 누릅니다.
+3. index.html, manifest.json, service-worker.js, icons 폴더, README_설치방법.txt를 업로드합니다.
 4. Commit changes를 누릅니다.
-5. GitHub Pages 주소를 새로고침합니다.
+5. GitHub Pages 주소를 휴대폰에서 새로고침합니다.
 
-주의:
-- 휴대폰에서 이전 버전이 계속 보이면 브라우저 캐시 때문입니다.
-- GitHub에 업로드 후 1~3분 정도 기다렸다가 새로고침하세요.
-- 홈 화면 앱도 완전히 종료 후 다시 실행하세요.
+휴대폰에서 이전 버전이 계속 보이면:
+- 브라우저 새로고침
+- 홈 화면 앱 완전 종료 후 재실행
+- 안 되면 Chrome/Safari 캐시 삭제
+- GitHub Pages 반영까지 1~3분 대기
