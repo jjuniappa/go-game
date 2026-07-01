@@ -12,13 +12,17 @@
 <style>
 :root{
   --bg:#070707;
-  --panel:#111;
   --text:#f7f7f7;
   --muted:#aaa;
   --accent:#c00001;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overscroll-behavior:none}
+html,body{
+  margin:0;width:100%;height:100%;overflow:hidden;
+  background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  overscroll-behavior:none;
+}
 body{min-height:100dvh;display:flex;flex-direction:column}
 .topbar{
   padding:max(12px,env(safe-area-inset-top)) 14px 10px;
@@ -41,25 +45,19 @@ body{min-height:100dvh;display:flex;flex-direction:column}
   overflow:hidden;
   touch-action:none;
   background:
-    radial-gradient(circle at 50% 45%,rgba(192,0,1,.12),transparent 35%),
-    linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px),
-    linear-gradient(0deg,rgba(255,255,255,.022) 1px,transparent 1px),
+    radial-gradient(circle at 50% 50%,rgba(192,0,1,.10),transparent 34%),
+    linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px),
+    linear-gradient(0deg,rgba(255,255,255,.018) 1px,transparent 1px),
     #070707;
-  background-size:auto,40px 40px,40px 40px;
+  background-size:auto,42px 42px,42px 42px;
 }
 .canvas{position:absolute;inset:0;width:100%;height:100%}
 .tap-zone{position:absolute;inset:0;z-index:4}
 .judge{
-  position:absolute;
-  left:50%;
-  top:44%;
+  position:absolute;left:50%;top:44%;
   transform:translate(-50%,-50%);
-  font-size:34px;
-  font-weight:1000;
-  letter-spacing:-.05em;
-  opacity:0;
-  pointer-events:none;
-  z-index:8;
+  font-size:34px;font-weight:1000;letter-spacing:-.05em;
+  opacity:0;pointer-events:none;z-index:8;
   text-shadow:0 6px 24px rgba(0,0,0,.85);
 }
 .judge.show{animation:judge .55s ease}
@@ -69,12 +67,8 @@ body{min-height:100dvh;display:flex;flex-direction:column}
   100%{opacity:0;transform:translate(-50%,-90%) scale(1)}
 }
 .overlay{
-  position:fixed;
-  inset:0;
-  z-index:30;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  position:fixed;inset:0;z-index:30;
+  display:flex;align-items:center;justify-content:center;
   padding:22px;
   background:
     radial-gradient(circle at top,rgba(192,0,1,.25),transparent 34%),
@@ -92,20 +86,17 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 .card h2{margin:0 0 6px;font-size:31px;letter-spacing:-.08em}
 .card p{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.5}
 .btn{
-  width:100%;
-  border:0;
-  border-radius:16px;
-  padding:14px 12px;
-  background:var(--accent);
-  color:#fff;
-  font-weight:950;
-  font-size:16px;
-  margin-top:10px;
-  cursor:pointer;
+  width:100%;border:0;border-radius:16px;
+  padding:14px 12px;background:var(--accent);color:#fff;
+  font-weight:950;font-size:16px;margin-top:10px;cursor:pointer;
 }
 .sub-btn{background:#2d2d2d;font-size:14px;padding:12px}
 .difficulty{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.diff-btn{border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:11px 6px;background:#252525;color:#ddd;font-size:13px;font-weight:900}
+.diff-btn{
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;padding:11px 6px;background:#252525;color:#ddd;
+  font-size:13px;font-weight:900;
+}
 .diff-btn.active{background:var(--accent);color:#fff;border-color:transparent}
 .howto{margin-top:12px;color:#999;font-size:12px;line-height:1.55}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
@@ -124,7 +115,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 <header class="topbar">
   <div class="title">
     <h1>Tap Drift</h1>
-    <p>좁은 1차선 외길 드리프트</p>
+    <p>진짜 1차선 외길 드리프트</p>
   </div>
   <div class="scorebox">
     <div><span>SCORE</span> <b id="scoreText">0</b></div>
@@ -142,7 +133,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 <section id="startOverlay" class="overlay">
   <div class="card">
     <h2>Tap Drift</h2>
-    <p>자동차는 좁은 1차선 외길을 자동으로 달립니다. 길이 꺾이는 순간을 직접 보고 터치하세요.</p>
+    <p>자동차는 하나의 좁은 외길을 따라 자동으로 달립니다. 길이 꺾이는 순간을 보고 터치하세요.</p>
     <div class="difficulty">
       <button class="diff-btn" data-diff="easy">Easy</button>
       <button class="diff-btn active" data-diff="normal">Normal</button>
@@ -151,7 +142,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
     <button id="startBtn" class="btn">게임 시작</button>
     <div class="howto">
       조작법: 화면 아무 곳이나 터치 = 90도 방향 전환<br>
-      안내선은 없습니다. 자동차와 거의 비슷한 폭의 외길을 통과해야 합니다.
+      안내선 없음. 길은 하나뿐이고, 자동차 폭과 거의 비슷합니다.
     </div>
   </div>
 </section>
@@ -159,7 +150,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 <section id="resultOverlay" class="overlay hidden">
   <div class="card">
     <h2>CRASH!</h2>
-    <p>벽에 부딪혔습니다.</p>
+    <p>외길을 벗어났습니다.</p>
     <div class="stats">
       <div class="stat"><small>Score</small><strong id="resultScore">0</strong></div>
       <div class="stat"><small>Best</small><strong id="resultBest">0</strong></div>
@@ -195,15 +186,15 @@ let running=false;
 let raf=null;
 let last=0;
 let difficulty="normal";
-let best=Number(localStorage.getItem("tap-drift-best-narrow")||0);
+let best=Number(localStorage.getItem("tap-drift-single-road-best")||0);
 
 let car,path,currentSeg,camera,score,distance,speed,roadWidth,totalTime;
 let particles=[];
 
 const diff={
-  easy:{speed:130,width:48,accel:2.1,turnWindow:39},
-  normal:{speed:155,width:42,accel:3.0,turnWindow:34},
-  hard:{speed:180,width:38,accel:4.0,turnWindow:30}
+  easy:{speed:125,width:48,accel:2.0,turnWindow:42},
+  normal:{speed:150,width:42,accel:2.8,turnWindow:36},
+  hard:{speed:172,width:38,accel:3.7,turnWindow:31}
 };
 
 const carLength=34;
@@ -220,22 +211,33 @@ window.addEventListener("resize",resize);
 resize();
 
 function makePath(){
-  const dirs=[
-    {x:0,y:-1},
-    {x:1,y:0},
-    {x:0,y:1},
-    {x:-1,y:0}
-  ];
+  /*
+    진짜 외길 생성 방식:
+    - 전체 진행 방향은 위쪽으로만 전진
+    - 수직 위 진행 + 좌/우 수평 진행을 번갈아 생성
+    - 절대 아래로 내려가지 않음
+    - x 범위를 제한해서 화면 안에서만 좌우로 꺾임
+    - 자기 길과 교차하지 않음
+  */
   const pts=[{x:0,y:0}];
-  let dir=0;
-  let len=240;
-  for(let i=0;i<160;i++){
-    const p=pts[pts.length-1];
-    const d=dirs[dir];
-    pts.push({x:p.x+d.x*len,y:p.y+d.y*len});
-    dir=(dir+(Math.random()<0.5?-1:1)+4)%4;
-    len=170+Math.random()*140-Math.min(i,50)*1.1;
-    len=Math.max(115,len);
+  let x=0;
+  let y=0;
+  const xLimit=190;
+
+  for(let i=0;i<180;i++){
+    const upLen=Math.max(92, 175 + Math.random()*80 - Math.min(i,55)*0.85);
+    y-=upLen;
+    pts.push({x,y});
+
+    let dir;
+    if(x > xLimit*0.55) dir=-1;
+    else if(x < -xLimit*0.55) dir=1;
+    else dir=Math.random()<0.5?-1:1;
+
+    const sideLen=Math.max(90, 145 + Math.random()*90 - Math.min(i,55)*0.55);
+    x+=dir*sideLen;
+    x=Math.max(-xLimit,Math.min(xLimit,x));
+    pts.push({x,y});
   }
   return pts;
 }
@@ -251,7 +253,9 @@ function resetGame(){
   const cfg=diff[difficulty];
   path=makePath();
   currentSeg=0;
-  score=0;distance=0;totalTime=0;
+  score=0;
+  distance=0;
+  totalTime=0;
   speed=cfg.speed;
   roadWidth=cfg.width;
   particles=[];
@@ -295,8 +299,8 @@ function update(dt){
   car.x+=car.dirX*speed*dt;
   car.y+=car.dirY*speed*dt;
 
-  camera.x+=(car.x-camera.x)*0.12;
-  camera.y+=(car.y-camera.y)*0.12;
+  camera.x+=(car.x-camera.x)*0.14;
+  camera.y+=(car.y-camera.y)*0.14;
 
   if(!isCarInsideRoad()){
     crash();
@@ -309,16 +313,17 @@ function update(dt){
 
 function isCarInsideRoad(){
   const corners=getCarCorners();
-  const allowance=1.5;
+  const allowance=1.2;
   for(const p of corners){
-    const d=distanceToPath(p.x,p.y);
+    const d=distanceToVisiblePath(p.x,p.y);
     if(d>roadWidth/2+allowance) return false;
   }
   return true;
 }
 
 function getCarCorners(){
-  const ca=Math.cos(car.angle),sa=Math.sin(car.angle);
+  const ca=Math.cos(car.angle);
+  const sa=Math.sin(car.angle);
   const halfL=carLength/2-2;
   const halfW=carWidth/2-1;
   const local=[
@@ -333,9 +338,9 @@ function getCarCorners(){
   }));
 }
 
-function distanceToPath(x,y){
+function distanceToVisiblePath(x,y){
   let best=Infinity;
-  for(let i=Math.max(0,currentSeg-2);i<Math.min(path.length-1,currentSeg+4);i++){
+  for(let i=Math.max(0,currentSeg-1);i<Math.min(path.length-1,currentSeg+3);i++){
     const a=path[i],b=path[i+1];
     best=Math.min(best,pointSegmentDistance(x,y,a.x,a.y,b.x,b.y));
   }
@@ -348,7 +353,8 @@ function pointSegmentDistance(px,py,x1,y1,x2,y2){
   if(l2===0)return Math.hypot(px-x1,py-y1);
   let t=((px-x1)*dx+(py-y1)*dy)/l2;
   t=Math.max(0,Math.min(1,t));
-  const x=x1+t*dx,y=y1+t*dy;
+  const x=x1+t*dx;
+  const y=y1+t*dy;
   return Math.hypot(px-x,py-y);
 }
 
@@ -366,6 +372,7 @@ function tap(){
   const info=getNextCornerInfo();
   if(!info)return;
   const d=info.dist;
+
   if(d<=cfg.turnWindow){
     currentSeg++;
     const ns=segmentInfo(currentSeg);
@@ -390,7 +397,7 @@ function crash(){
   void flash.offsetWidth;
   flash.classList.add("show");
   best=Math.max(best,score);
-  localStorage.setItem("tap-drift-best-narrow",String(best));
+  localStorage.setItem("tap-drift-single-road-best",String(best));
   resultScore.textContent=score.toLocaleString();
   resultBest.textContent=best.toLocaleString();
   resultDistance.textContent=Math.floor(distance)+"m";
@@ -427,7 +434,10 @@ function updateParticles(dt){
 }
 
 function worldToScreen(x,y){
-  return {x:W/2+(x-camera.x),y:H*0.62+(y-camera.y)};
+  return {
+    x:W/2+(x-camera.x),
+    y:H*0.66+(y-camera.y)
+  };
 }
 
 function draw(){
@@ -440,55 +450,104 @@ function draw(){
 
 function drawGrid(){
   ctx.save();
-  ctx.strokeStyle="rgba(255,255,255,.03)";
+  ctx.strokeStyle="rgba(255,255,255,.028)";
   ctx.lineWidth=1;
-  const step=40;
+  const step=42;
   const ox=(-camera.x%step+step)%step;
   const oy=(-camera.y%step+step)%step;
-  for(let x=ox;x<W;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-  for(let y=oy;y<H;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  for(let x=ox;x<W;x+=step){
+    ctx.beginPath();
+    ctx.moveTo(x,0);
+    ctx.lineTo(x,H);
+    ctx.stroke();
+  }
+  for(let y=oy;y<H;y+=step){
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    ctx.lineTo(W,y);
+    ctx.stroke();
+  }
   ctx.restore();
 }
 
 function drawRoad(){
   ctx.save();
-  ctx.lineCap="round";
-  ctx.lineJoin="round";
+  ctx.lineCap="butt";
+  ctx.lineJoin="miter";
 
+  const start=Math.max(0,currentSeg-2);
+  const end=Math.min(path.length-1,currentSeg+9);
+
+  // 외곽 네온
   ctx.beginPath();
-  for(let i=0;i<path.length;i++){
+  for(let i=start;i<=end;i++){
     const p=worldToScreen(path[i].x,path[i].y);
-    if(i===0)ctx.moveTo(p.x,p.y);
+    if(i===start) ctx.moveTo(p.x,p.y);
     else ctx.lineTo(p.x,p.y);
   }
-  ctx.strokeStyle="rgba(192,0,1,.28)";
-  ctx.lineWidth=roadWidth+10;
-  ctx.shadowColor="rgba(192,0,1,.45)";
-  ctx.shadowBlur=16;
+  ctx.strokeStyle="rgba(192,0,1,.34)";
+  ctx.lineWidth=roadWidth+12;
+  ctx.shadowColor="rgba(192,0,1,.5)";
+  ctx.shadowBlur=14;
   ctx.stroke();
 
+  // 실제 1차선 도로
   ctx.shadowBlur=0;
   ctx.beginPath();
-  for(let i=0;i<path.length;i++){
+  for(let i=start;i<=end;i++){
     const p=worldToScreen(path[i].x,path[i].y);
-    if(i===0)ctx.moveTo(p.x,p.y);
+    if(i===start) ctx.moveTo(p.x,p.y);
     else ctx.lineTo(p.x,p.y);
   }
-  ctx.strokeStyle="#222";
+  ctx.strokeStyle="#202020";
   ctx.lineWidth=roadWidth;
   ctx.stroke();
 
+  // 양쪽 벽 느낌의 얇은 경계만 표시
+  drawRoadEdges(start,end);
+
+  ctx.restore();
+}
+
+function drawRoadEdges(start,end){
+  const half=roadWidth/2;
+  const left=[];
+  const right=[];
+
+  for(let i=start;i<end;i++){
+    const a=path[i];
+    const b=path[i+1];
+    const dx=b.x-a.x;
+    const dy=b.y-a.y;
+    const len=Math.hypot(dx,dy);
+    const nx=-dy/len;
+    const ny=dx/len;
+
+    if(i===start){
+      left.push({x:a.x+nx*half,y:a.y+ny*half});
+      right.push({x:a.x-nx*half,y:a.y-ny*half});
+    }
+    left.push({x:b.x+nx*half,y:b.y+ny*half});
+    right.push({x:b.x-nx*half,y:b.y-ny*half});
+  }
+
+  ctx.strokeStyle="rgba(255,255,255,.28)";
+  ctx.lineWidth=1.5;
   ctx.beginPath();
-  for(let i=0;i<path.length;i++){
-    const p=worldToScreen(path[i].x,path[i].y);
+  for(let i=0;i<left.length;i++){
+    const p=worldToScreen(left[i].x,left[i].y);
     if(i===0)ctx.moveTo(p.x,p.y);
     else ctx.lineTo(p.x,p.y);
   }
-  ctx.strokeStyle="rgba(255,255,255,.16)";
-  ctx.lineWidth=1.2;
   ctx.stroke();
 
-  ctx.restore();
+  ctx.beginPath();
+  for(let i=0;i<right.length;i++){
+    const p=worldToScreen(right[i].x,right[i].y);
+    if(i===0)ctx.moveTo(p.x,p.y);
+    else ctx.lineTo(p.x,p.y);
+  }
+  ctx.stroke();
 }
 
 function drawCar(){
@@ -496,8 +555,8 @@ function drawCar(){
   ctx.save();
   ctx.translate(p.x,p.y);
   ctx.rotate(car.angle);
-  ctx.shadowColor="rgba(255,255,255,.3)";
-  ctx.shadowBlur=10;
+  ctx.shadowColor="rgba(255,255,255,.28)";
+  ctx.shadowBlur=9;
 
   ctx.fillStyle="#f3f3f3";
   roundRect(ctx,-carLength/2,-carWidth/2,carLength,carWidth,5);
@@ -548,17 +607,29 @@ function updateTexts(){
   bestText.textContent=best.toLocaleString();
 }
 
-tapZone.addEventListener("pointerdown",e=>{e.preventDefault();tap();});
+tapZone.addEventListener("pointerdown",e=>{
+  e.preventDefault();
+  tap();
+});
 startBtn.addEventListener("click",startGame);
 retryBtn.addEventListener("click",startGame);
-homeBtn.addEventListener("click",()=>{resultOverlay.classList.add("hidden");startOverlay.classList.remove("hidden")});
+homeBtn.addEventListener("click",()=>{
+  resultOverlay.classList.add("hidden");
+  startOverlay.classList.remove("hidden");
+});
 document.querySelectorAll(".diff-btn").forEach(btn=>btn.addEventListener("click",()=>{
   difficulty=btn.dataset.diff;
   document.querySelectorAll(".diff-btn").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
 }));
-document.addEventListener("visibilitychange",()=>{if(document.hidden&&running)crash()});
-if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("./service-worker.js").catch(()=>{})})}
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden&&running)crash();
+});
+if("serviceWorker"in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+  });
+}
 resetGame();
 draw();
 </script>
