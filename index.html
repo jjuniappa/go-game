@@ -56,6 +56,10 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 .preview-super .vent-l,.preview-super .vent-r{position:absolute;top:23px;width:22px;height:8px;background:#111;border-radius:10px}.preview-super .vent-l{left:34px}.preview-super .vent-r{right:34px}
 .preview-super .tail-l,.preview-super .tail-r{position:absolute;bottom:18px;width:22px;height:8px;background:#111;border-radius:10px}.preview-super .tail-l{left:38px}.preview-super .tail-r{right:38px}
 @media (max-width:640px){.vehicle-grid{grid-template-columns:1fr}.vehicle-card{min-height:290px}.vehicle-preview{height:150px}.preview-car{transform:rotate(-90deg) scale(.72)}}
+.single-car-preview{margin:14px 0 10px;padding:18px 16px;border:1px solid rgba(255,255,255,.10);border-radius:22px;background:linear-gradient(180deg,#121212 0%,#0a0a0a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.single-car-image{width:min(240px,80%);height:auto;display:block;filter:drop-shadow(0 10px 22px rgba(0,0,0,.38))}
+.single-car-name{margin-top:10px;font-size:20px;font-weight:1000;letter-spacing:-.03em}
+.single-car-desc{margin-top:4px;font-size:13px;color:#9ca3af;text-align:center;line-height:1.45}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
 .stat{background:#222;border:1px solid rgba(255,255,255,.08);border-radius:15px;padding:12px}
 .stat small{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}
@@ -89,41 +93,10 @@ body{min-height:100dvh;display:flex;flex-direction:column}
   <div class="card">
     <h2>Tap Drift</h2>
     <p>빨간 외길을 따라 달립니다. 코너 타이밍에 맞춰 터치해 방향을 바꾸세요.</p>
-
-    <div class="vehicle-title">차량 선택</div>
-    <div class="vehicle-grid">
-      <button class="vehicle-card active" data-vehicle="basic" type="button">
-        <div class="vehicle-preview">
-          <div class="preview-car preview-basic">
-            <div class="body"></div>
-            <div class="cockpit"></div>
-            <div class="glass-front"></div>
-            <div class="glass-back"></div>
-            <div class="accent-front"></div>
-            <div class="accent-back"></div>
-            <div class="mirror-l"></div>
-            <div class="mirror-r"></div>
-          </div>
-        </div>
-        <div class="vehicle-name">기본차</div>
-        <div class="vehicle-desc">일반적인 승용차 형태로 표시됩니다.</div>
-      </button>
-      <button class="vehicle-card" data-vehicle="super" type="button">
-        <div class="vehicle-preview">
-          <div class="preview-car preview-super">
-            <div class="body"></div>
-            <div class="cockpit"></div>
-            <div class="spine"></div>
-            <div class="grille"></div>
-            <div class="vent-l"></div>
-            <div class="vent-r"></div>
-            <div class="tail-l"></div>
-            <div class="tail-r"></div>
-          </div>
-        </div>
-        <div class="vehicle-name" style="color:#2f6df6">슈퍼카</div>
-        <div class="vehicle-desc">고성능 슈퍼카 형태로 표시됩니다.</div>
-      </button>
+    <div class="single-car-preview">
+      <img class="single-car-image" src="./assets/car_super.png" alt="슈퍼카" />
+      <div class="single-car-name">슈퍼카</div>
+      <div class="single-car-desc">차량 선택은 제거되었습니다. 이 차량 하나로 플레이합니다.</div>
     </div>
 
     <button id="startBtn" class="btn">게임 시작</button>
@@ -171,10 +144,12 @@ const flash=document.getElementById("flash");
 let W=0,H=0,dpr=1;
 let running=false,raf=null,last=0;
 let best=Number(localStorage.getItem("tap-drift-vehicle-best")||0);
-let selectedVehicle=localStorage.getItem("tap-drift-vehicle")||"basic";
-if(!["basic","super"].includes(selectedVehicle)) selectedVehicle="basic";
 let car,path,currentSeg,camera,score,distance,speed,roadWidth,totalTime,stage;
 let particles=[];
+const carSprite=new Image();
+let carSpriteReady=false;
+carSprite.onload=()=>{carSpriteReady=true;draw();};
+carSprite.src="./assets/car_super.png";
 
 const stages={
   easy:{start:0,speed:124,width:48,accel:3.6,turnWindow:23,label:"EASY"},
@@ -445,99 +420,31 @@ function drawVehicle(){
   const p=worldToScreen(car.x,car.y);
   ctx.save();
   ctx.translate(p.x,p.y);
-  ctx.rotate(car.angle);
-  ctx.shadowColor="rgba(255,255,255,.28)";
-  ctx.shadowBlur=9;
+  ctx.rotate(car.angle + Math.PI/2);
+  ctx.shadowColor="rgba(0,0,0,.28)";
+  ctx.shadowBlur=10;
 
-  if(selectedVehicle==="super") drawSuperCar();
-  else drawBasicCar();
+  if(carSpriteReady){
+    const w=carWidth*2.1;
+    const h=carLength*1.08;
+    ctx.drawImage(carSprite, -w/2, -h/2, w, h);
+  }else{
+    ctx.fillStyle="#ff3030";
+    ctx.beginPath();
+    ctx.moveTo(0,-16);
+    ctx.bezierCurveTo(10,-16,15,-13,17,-7);
+    ctx.lineTo(18,0);
+    ctx.lineTo(17,7);
+    ctx.bezierCurveTo(15,13,10,16,0,16);
+    ctx.bezierCurveTo(-10,16,-15,13,-17,7);
+    ctx.lineTo(-18,0);
+    ctx.lineTo(-17,-7);
+    ctx.bezierCurveTo(-15,-13,-10,-16,0,-16);
+    ctx.closePath();
+    ctx.fill();
+  }
 
   ctx.restore();
-}
-
-function drawBasicCar(){
-  ctx.fillStyle="#f3f3f3";
-  roundRect(ctx,-carLength/2,-carWidth/2,carLength,carWidth,5);
-  ctx.fill();
-  ctx.fillStyle="#c00001";
-  roundRect(ctx,-8,-8,17,16,4);
-  ctx.fill();
-  drawWheels();
-  drawHeadlights();
-}
-
-function drawSuperCar(){
-  // Bugatti-inspired top view
-  ctx.fillStyle="#1e63e9";
-  ctx.beginPath();
-  ctx.moveTo(0,-16);
-  ctx.bezierCurveTo(10,-16,15,-13,17,-7);
-  ctx.lineTo(18,0);
-  ctx.lineTo(17,7);
-  ctx.bezierCurveTo(15,13,10,16,0,16);
-  ctx.bezierCurveTo(-10,16,-15,13,-17,7);
-  ctx.lineTo(-18,0);
-  ctx.lineTo(-17,-7);
-  ctx.bezierCurveTo(-15,-13,-10,-16,0,-16);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle="#111827";
-  ctx.beginPath();
-  ctx.moveTo(0,-11);
-  ctx.bezierCurveTo(6,-11,9,-8,9,-2);
-  ctx.lineTo(9,7);
-  ctx.bezierCurveTo(9,10,5,12,0,12);
-  ctx.bezierCurveTo(-5,12,-9,10,-9,7);
-  ctx.lineTo(-9,-2);
-  ctx.bezierCurveTo(-9,-8,-6,-11,0,-11);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.strokeStyle="rgba(255,255,255,.55)";
-  ctx.lineWidth=1.5;
-  ctx.beginPath();
-  ctx.moveTo(0,-8);
-  ctx.lineTo(0,12);
-  ctx.stroke();
-
-  // Bugatti horseshoe grille
-  ctx.fillStyle="#171717";
-  ctx.beginPath();
-  ctx.moveTo(-5,-15);
-  ctx.quadraticCurveTo(0,-18,5,-15);
-  ctx.lineTo(5,-10);
-  ctx.quadraticCurveTo(0,-7,-5,-10);
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle="#b9d4ff";
-  ctx.lineWidth=1;
-  ctx.stroke();
-
-  ctx.fillStyle="#dcecff";
-  ctx.fillRect(-13,-10,4,2.5);
-  ctx.fillRect(9,-10,4,2.5);
-  ctx.fillStyle="#ff4d4d";
-  ctx.fillRect(-11,13,3,1.8);
-  ctx.fillRect(8,13,3,1.8);
-}
-
-function drawWheels(){
-  ctx.fillStyle="#151515";
-  ctx.fillRect(-13,-14,7,4);
-  ctx.fillRect(-13,10,7,4);
-  ctx.fillRect(7,-14,7,4);
-  ctx.fillRect(7,10,7,4);
-}
-
-function drawHeadlights(){
-  ctx.fillStyle="#ffd35f";
-  ctx.fillRect(13,-6,4,4);
-  ctx.fillRect(13,2,4,4);
-}
-
-function roundRect(ctx,x,y,w,h,r){
-  ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
 }
 
 function drawParticles(){
@@ -557,28 +464,8 @@ function updateTexts(){
   bestText.textContent=best.toLocaleString();
 }
 
-function refreshVehicleButtons(){
-  document.querySelectorAll(".vehicle-card").forEach(btn=>{
-    btn.classList.toggle("active",btn.dataset.vehicle===selectedVehicle);
-  });
-}
-
-document.querySelectorAll(".vehicle-card").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    selectedVehicle=btn.dataset.vehicle;
-    localStorage.setItem("tap-drift-vehicle",selectedVehicle);
-    refreshVehicleButtons();
-    draw();
-  });
-});
-
-tapZone.addEventListener("pointerdown",e=>{e.preventDefault();tap()});
-startBtn.addEventListener("click",startGame);
-retryBtn.addEventListener("click",startGame);
-homeBtn.addEventListener("click",()=>{resultOverlay.classList.add("hidden");startOverlay.classList.remove("hidden")});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&running)crash()});
 if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("./service-worker.js").catch(()=>{})})}
-refreshVehicleButtons();
 resetGame();
 draw();
 </script>
