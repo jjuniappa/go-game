@@ -1,75 +1,638 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<meta name="theme-color" content="#111111" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-title" content="Coin Catcher" />
-<link rel="manifest" href="./manifest.json" />
-<link rel="apple-touch-icon" href="./icons/icon-192.png" />
-<title>Coin Catcher</title>
-<style>
-:root{--bg:#080808;--panel:#121212;--text:#f7f7f7;--muted:#aaa;--accent:#c00001;--coin:#ffd35f}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overscroll-behavior:none}
-body{min-height:100dvh;display:flex;flex-direction:column}
-.topbar{padding:max(12px,env(safe-area-inset-top)) 14px 10px;background:#111;border-bottom:1px solid rgba(255,255,255,.08);display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;z-index:5}
-.title h1{margin:0;font-size:18px;letter-spacing:-.05em}.title p{margin:2px 0 0;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:54vw}
-.score-box{text-align:right;font-size:13px;line-height:1.38;font-weight:950}.score-box span{color:var(--muted);font-weight:700}
-.game{position:relative;flex:1;min-height:0;overflow:hidden;background:radial-gradient(circle at 50% 0%,rgba(255,211,95,.14),transparent 28%),radial-gradient(circle at 10% 80%,rgba(192,0,1,.13),transparent 30%),radial-gradient(circle at 90% 75%,rgba(95,255,168,.11),transparent 28%),#080808;touch-action:none}
-.level-banner{position:absolute;left:50%;top:16px;transform:translateX(-50%);padding:8px 13px;border-radius:999px;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.08);font-size:12px;font-weight:900;color:#ddd;z-index:4;pointer-events:none}
-.falling{position:absolute;display:grid;place-items:center;transform:translate(-50%,-50%);z-index:2;will-change:transform;pointer-events:none}
-.coin{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff6bd 0%,#ffe16e 22%,#ffc02b 62%,#b67606 100%);border:3px solid #f7b81f;box-shadow:inset 0 0 0 3px rgba(255,255,255,.18),0 0 16px rgba(255,211,95,.42);position:relative;animation:coinSpin .7s linear infinite}
-.coin:after{content:"₩";position:absolute;inset:0;display:grid;place-items:center;color:#7b4b00;font-weight:1000;font-size:23px;text-shadow:0 1px 0 rgba(255,255,255,.35)}
-@keyframes coinSpin{0%{transform:rotateY(0deg) rotateZ(0)}100%{transform:rotateY(360deg) rotateZ(10deg)}}
-.rock{width:45px;height:40px;background:radial-gradient(circle at 35% 25%,#aaa,#6d6d6d 45%,#3e3e3e 100%);clip-path:polygon(21% 5%,72% 10%,96% 42%,75% 92%,24% 88%,4% 46%);box-shadow:0 6px 14px rgba(0,0,0,.45);animation:rockSpin 1.1s linear infinite}
-@keyframes rockSpin{to{transform:rotate(360deg)}}
-.heart-item{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff,#ff7a9e 35%,#d6003c 100%);box-shadow:0 0 18px rgba(255,60,110,.55);position:relative;animation:pulse .75s ease infinite alternate}.heart-item:after{content:"♥";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-weight:1000;font-size:25px}@keyframes pulse{from{transform:scale(.94)}to{transform:scale(1.08)}}
-.basket{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));width:106px;height:58px;transform:translateX(-50%);z-index:3;touch-action:none}
-.basket-body{position:absolute;left:0;right:0;bottom:0;height:42px;border-radius:8px 8px 24px 24px;background:linear-gradient(180deg,#eee,#bdbdbd);border:3px solid #f8f8f8;box-shadow:inset 0 -8px 0 rgba(0,0,0,.16),0 8px 18px rgba(0,0,0,.45)}
-.basket-body:before{content:"";position:absolute;left:12px;right:12px;top:9px;height:4px;border-radius:999px;background:rgba(0,0,0,.22);box-shadow:0 10px 0 rgba(0,0,0,.14)}
-.basket-handle{position:absolute;left:22px;right:22px;top:0;height:30px;border:5px solid #eaeaea;border-bottom:0;border-radius:999px 999px 0 0;opacity:.95}
-.flash{position:absolute;inset:0;background:rgba(192,0,1,.22);opacity:0;pointer-events:none;z-index:6}.flash.show{animation:damage .25s ease}@keyframes damage{0%,100%{opacity:0}40%{opacity:1}}
-.float-text{position:absolute;font-size:24px;font-weight:1000;z-index:8;pointer-events:none;animation:floatUp .65s ease forwards;text-shadow:0 4px 16px rgba(0,0,0,.8)}@keyframes floatUp{from{opacity:0;transform:translate(-50%,0) scale(.8)}20%{opacity:1}to{opacity:0;transform:translate(-50%,-54px) scale(1.08)}}
-.overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:22px;background:radial-gradient(circle at top,rgba(255,211,95,.2),transparent 32%),linear-gradient(180deg,#181818,#050505)}.overlay.hidden{display:none}
-.card{width:min(440px,100%);background:rgba(18,18,18,.96);border:1px solid rgba(255,255,255,.1);border-radius:26px;padding:22px;box-shadow:0 22px 80px rgba(0,0,0,.55)}
-.card h2{margin:0 0 6px;font-size:30px;letter-spacing:-.07em}.card p{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.5}
-.btn{width:100%;border:0;border-radius:16px;padding:14px 12px;background:var(--accent);color:#fff;font-weight:950;font-size:16px;margin-top:10px;cursor:pointer}.sub-btn{background:#2d2d2d;font-size:14px;padding:12px}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}.stat{background:#222;border:1px solid rgba(255,255,255,.08);border-radius:15px;padding:12px}.stat small{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}.stat strong{font-size:21px}
-.howto{margin-top:12px;color:#999;font-size:12px;line-height:1.55}.difficulty{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.diff-btn{border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:11px 6px;background:#252525;color:#ddd;font-size:13px;font-weight:900}.diff-btn.active{background:var(--accent);color:#fff;border-color:transparent}
-@media (min-width:900px){body{max-width:520px;margin:0 auto;border-left:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.08)}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AI 오목 게임</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #f8f3e8 0%, #ede0c5 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 18px;
+      color: #22170f;
+      overflow-x: hidden;
+    }
+    .app {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .top {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: -0.04em;
+    }
+    .badge {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(34, 23, 15, 0.1);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    #status {
+      width: 100%;
+      min-height: 46px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.64);
+      box-shadow: 0 6px 18px rgba(50, 30, 10, 0.08);
+      font-size: 17px;
+      font-weight: 800;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #boardWrap {
+      width: min(94vw, 620px);
+      height: min(94vw, 620px);
+      background: #d6a85f;
+      border: 5px solid #5f3817;
+      border-radius: 16px;
+      position: relative;
+      box-shadow: 0 16px 35px rgba(60, 35, 10, 0.28), inset 0 0 20px rgba(255,255,255,0.18);
+      touch-action: none;
+      overflow: hidden;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .controls {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      flex: 1;
+      padding: 13px 14px;
+      font-size: 16px;
+      font-weight: 800;
+      border: none;
+      border-radius: 12px;
+      background: #22170f;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(50, 30, 10, 0.18);
+    }
+    button.secondary {
+      background: rgba(34, 23, 15, 0.12);
+      color: #22170f;
+      box-shadow: none;
+    }
+    button:active { transform: translateY(1px); }
+    .info {
+      width: 100%;
+      margin-top: 2px;
+      font-size: 13px;
+      color: #6b513c;
+      text-align: center;
+      line-height: 1.55;
+    }
+  </style>
 </head>
 <body>
-<header class="topbar"><div class="title"><h1>Coin Catcher</h1><p>동전은 받고, 돌은 피하세요</p></div><div class="score-box"><div><span>SCORE</span> <b id="scoreText">0</b></div><div><span>♥</span> <b id="lifeText">3</b> <span>LV</span> <b id="levelText">1</b></div></div></header>
-<main id="game" class="game"><div id="levelBanner" class="level-banner">LEVEL 1</div><div id="basket" class="basket"><div class="basket-handle"></div><div class="basket-body"></div></div><div id="flash" class="flash"></div></main>
-<section id="startOverlay" class="overlay"><div class="card"><h2>Coin Catcher</h2><p>떨어지는 동전은 받고, 돌은 피하세요. 시간이 지날수록 더 빠르고 많이 떨어집니다.</p><div class="difficulty"><button class="diff-btn" data-diff="easy">Easy</button><button class="diff-btn active" data-diff="normal">Normal</button><button class="diff-btn" data-diff="hard">Hard</button></div><button id="startBtn" class="btn">게임 시작</button><div class="howto">조작법: 손가락으로 바구니를 좌우로 움직이세요.<br>🪙 동전 = 점수 / 🪨 돌 = 생명 감소 / ♥ 하트 = 생명 회복</div></div></section>
-<section id="resultOverlay" class="overlay hidden"><div class="card"><h2>GAME OVER</h2><p>최종 결과입니다.</p><div class="stats"><div class="stat"><small>Score</small><strong id="resultScore">0</strong></div><div class="stat"><small>Best</small><strong id="bestScore">0</strong></div><div class="stat"><small>Level</small><strong id="resultLevel">1</strong></div><div class="stat"><small>Coins</small><strong id="resultCoins">0</strong></div></div><button id="retryBtn" class="btn">다시 하기</button><button id="homeBtn" class="btn sub-btn">처음 화면</button></div></section>
-<script>
-const game=document.getElementById("game"),basket=document.getElementById("basket"),scoreText=document.getElementById("scoreText"),lifeText=document.getElementById("lifeText"),levelText=document.getElementById("levelText"),levelBanner=document.getElementById("levelBanner"),flash=document.getElementById("flash"),startOverlay=document.getElementById("startOverlay"),resultOverlay=document.getElementById("resultOverlay"),startBtn=document.getElementById("startBtn"),retryBtn=document.getElementById("retryBtn"),homeBtn=document.getElementById("homeBtn"),resultScore=document.getElementById("resultScore"),bestScore=document.getElementById("bestScore"),resultLevel=document.getElementById("resultLevel"),resultCoins=document.getElementById("resultCoins");
-let running=false,animationId=null,lastTime=0,spawnTimer=0,score=0,life=3,level=1,coins=0,difficulty="normal",basketX=0,items=[],elapsed=0,itemId=0,audioCtx=null;
-const diffConfig={easy:{speed:150,spawn:.9,rockRate:.18},normal:{speed:190,spawn:.72,rockRate:.24},hard:{speed:230,spawn:.55,rockRate:.31}};
-function beep(type){try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);if(type==="coin"){o.frequency.setValueAtTime(880,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(1320,audioCtx.currentTime+.12);g.gain.setValueAtTime(.08,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.14)}else if(type==="rock"){o.frequency.setValueAtTime(120,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(60,audioCtx.currentTime+.18);g.gain.setValueAtTime(.12,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.2)}else{o.frequency.setValueAtTime(440,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(880,audioCtx.currentTime+.2);g.gain.setValueAtTime(.08,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.25)}o.start();o.stop(audioCtx.currentTime+.25)}catch(e){}}
-function startGame(){resetGame();startOverlay.classList.add("hidden");resultOverlay.classList.add("hidden");running=true;lastTime=performance.now();beep("start");animationId=requestAnimationFrame(loop)}
-function resetGame(){running=false;cancelAnimationFrame(animationId);items.forEach(i=>i.el.remove());items=[];score=0;life=3;level=1;coins=0;elapsed=0;spawnTimer=0;itemId=0;basketX=game.clientWidth/2;updateBasket();updateUI()}
-function loop(now){if(!running)return;const dt=Math.min(.033,(now-lastTime)/1000);lastTime=now;elapsed+=dt;const old=level;level=Math.max(1,Math.floor(elapsed/12)+1);if(level!==old)showFloat(game.clientWidth/2,90,`LEVEL ${level}`,"#fff");const cfg=diffConfig[difficulty],spawnInterval=Math.max(.22,cfg.spawn-level*.045);spawnTimer+=dt;while(spawnTimer>=spawnInterval){spawnTimer-=spawnInterval;spawnItem();if(level>=4&&Math.random()<.22)spawnItem();if(level>=7&&Math.random()<.14)spawnItem()}updateItems(dt);updateUI();animationId=requestAnimationFrame(loop)}
-function spawnItem(){const cfg=diffConfig[difficulty],w=game.clientWidth,margin=30,x=margin+Math.random()*(w-margin*2);let type="coin";const rockRate=Math.min(.52,cfg.rockRate+level*.025),heartRate=life<3?.035:.012,r=Math.random();if(r<heartRate)type="heart";else if(r<heartRate+rockRate)type="rock";const el=document.createElement("div");el.className="falling";const inner=document.createElement("div");inner.className=type==="coin"?"coin":type==="rock"?"rock":"heart-item";el.appendChild(inner);game.appendChild(el);const speed=cfg.speed+level*22+Math.random()*75;items.push({id:itemId++,type,x,y:-50,size:type==="rock"?46:44,speed,el})}
-function updateItems(dt){const br=getBasketRect(),h=game.clientHeight;for(const item of [...items]){item.y+=item.speed*dt;item.el.style.transform=`translate(${item.x}px,${item.y}px)`;if(isColliding(item,br)){collectItem(item);continue}if(item.y>h+60)removeItem(item)}}
-function getBasketRect(){const w=106,h=48,bottom=18;return{left:basketX-w/2,right:basketX+w/2,top:game.clientHeight-bottom-h,bottom:game.clientHeight-bottom+4}}
-function isColliding(item,r){const half=item.size/2;return item.x+half>r.left&&item.x-half<r.right&&item.y+half>r.top&&item.y-half<r.bottom}
-function collectItem(item){if(item.type==="coin"){const gain=10+level*2;score+=gain;coins++;showFloat(item.x,item.y,`+${gain}`,"#ffd35f");beep("coin")}else if(item.type==="rock"){life--;showFloat(item.x,item.y,"-♥","#ff5f7c");flash.classList.remove("show");void flash.offsetWidth;flash.classList.add("show");beep("rock");if(life<=0){removeItem(item);endGame();return}}else{life=Math.min(3,life+1);score+=30;showFloat(item.x,item.y,"+♥","#ff7aa2");beep("coin")}removeItem(item)}
-function removeItem(item){item.el.remove();items=items.filter(i=>i.id!==item.id)}
-function showFloat(x,y,text,color){const el=document.createElement("div");el.className="float-text";el.textContent=text;el.style.left=`${x}px`;el.style.top=`${y}px`;el.style.color=color;game.appendChild(el);setTimeout(()=>el.remove(),700)}
-function updateUI(){scoreText.textContent=score.toLocaleString();lifeText.textContent=life;levelText.textContent=level;levelBanner.textContent=`LEVEL ${level} · SPEED ${Math.round(diffConfig[difficulty].speed+level*22)}`}
-function updateBasket(){const minX=54,maxX=game.clientWidth-54;basketX=Math.max(minX,Math.min(maxX,basketX||game.clientWidth/2));basket.style.left=`${basketX}px`}
-function moveBasketFromEvent(e){if(!running)return;const rect=game.getBoundingClientRect();basketX=e.clientX-rect.left;updateBasket()}
-function endGame(){running=false;cancelAnimationFrame(animationId);const best=Math.max(Number(localStorage.getItem("coin-catcher-best")||0),score);localStorage.setItem("coin-catcher-best",String(best));resultScore.textContent=score.toLocaleString();bestScore.textContent=best.toLocaleString();resultLevel.textContent=level;resultCoins.textContent=coins;resultOverlay.classList.remove("hidden")}
-document.querySelectorAll(".diff-btn").forEach(btn=>btn.addEventListener("click",()=>{difficulty=btn.dataset.diff;document.querySelectorAll(".diff-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active")}));
-startBtn.addEventListener("click",startGame);retryBtn.addEventListener("click",startGame);homeBtn.addEventListener("click",()=>{resultOverlay.classList.add("hidden");startOverlay.classList.remove("hidden")});
-game.addEventListener("pointerdown",e=>{e.preventDefault();moveBasketFromEvent(e)});game.addEventListener("pointermove",e=>{e.preventDefault();moveBasketFromEvent(e)});window.addEventListener("resize",updateBasket);document.addEventListener("visibilitychange",()=>{if(document.hidden&&running)endGame()});updateBasket();updateUI();
-if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("./service-worker.js").catch(()=>{})})}
-</script>
+  <main class="app">
+    <div class="top">
+      <h1>AI 오목</h1>
+      <div class="badge">10×10 HARD</div>
+    </div>
+
+    <div id="status">당신 차례입니다. 흑돌을 놓으세요.</div>
+
+    <div id="boardWrap">
+      <canvas id="board"></canvas>
+    </div>
+
+    <div class="controls">
+      <button onclick="resetGame()">다시 시작</button>
+      <button class="secondary" onclick="toggleFirstTurn()">선공 변경</button>
+    </div>
+
+    <div class="info">
+      사용자는 흑돌, AI는 백돌입니다. 선과 선이 만나는 교차점에 돌을 놓습니다.<br />
+      AI는 공격/방어 점수 계산으로 다음 수를 선택합니다.
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('board');
+    const ctx = canvas.getContext('2d');
+    const statusText = document.getElementById('status');
+
+    const SIZE = 10;
+    const EMPTY = 0;
+    const PLAYER = 1;
+    const AI = 2;
+    const WIN_COUNT = 5;
+
+    const directions = [
+      [1, 0],
+      [0, 1],
+      [1, 1],
+      [1, -1]
+    ];
+
+    let board = [];
+    let cell = 0;
+    let padding = 0;
+    let gameOver = false;
+    let currentTurn = PLAYER;
+    let playerFirst = true;
+    let lastMove = null;
+
+    function initCanvas() {
+      const wrap = document.getElementById('boardWrap');
+      const rect = wrap.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      padding = rect.width * 0.09;
+      cell = (rect.width - padding * 2) / (SIZE - 1);
+      drawBoard();
+    }
+
+    function resetGame() {
+      board = Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
+      gameOver = false;
+      currentTurn = playerFirst ? PLAYER : AI;
+      lastMove = null;
+      drawBoard();
+
+      if (currentTurn === PLAYER) {
+        statusText.textContent = '당신 차례입니다. 흑돌을 놓으세요.';
+      } else {
+        statusText.textContent = 'AI가 먼저 둡니다...';
+        setTimeout(aiMove, 350);
+      }
+    }
+
+    function toggleFirstTurn() {
+      playerFirst = !playerFirst;
+      resetGame();
+    }
+
+    function drawBoard() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      const bg = ctx.createLinearGradient(0, 0, w, h);
+      bg.addColorStop(0, '#e5bd78');
+      bg.addColorStop(1, '#bf823a');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      drawWoodTexture(w, h);
+
+      ctx.strokeStyle = '#3a240f';
+      ctx.lineWidth = 1.35;
+
+      for (let i = 0; i < SIZE; i++) {
+        const pos = padding + i * cell;
+        ctx.beginPath();
+        ctx.moveTo(padding, pos);
+        ctx.lineTo(w - padding, pos);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(pos, padding);
+        ctx.lineTo(pos, h - padding);
+        ctx.stroke();
+      }
+
+      drawStarPoints();
+
+      for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+          if (board[y][x] !== EMPTY) drawStone(x, y, board[y][x]);
+        }
+      }
+
+      if (lastMove) drawLastMoveMark(lastMove.x, lastMove.y);
+    }
+
+    function drawWoodTexture(w, h) {
+      ctx.globalAlpha = 0.1;
+      ctx.strokeStyle = '#5c3514';
+      for (let i = 0; i < 18; i++) {
+        const y = (i / 18) * h + Math.sin(i) * 8;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.bezierCurveTo(w * 0.3, y + 10, w * 0.65, y - 12, w, y + 6);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawStarPoints() {
+      const points = [[2,2], [7,2], [2,7], [7,7], [4,4], [5,5]];
+      ctx.fillStyle = '#3a240f';
+      points.forEach(([x, y]) => {
+        ctx.beginPath();
+        ctx.arc(padding + x * cell, padding + y * cell, Math.max(3, cell * 0.07), 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function drawStone(x, y, type) {
+      const cx = padding + x * cell;
+      const cy = padding + y * cell;
+      const radius = cell * 0.38;
+
+      ctx.shadowColor = 'rgba(0,0,0,0.35)';
+      ctx.shadowBlur = 5;
+      ctx.shadowOffsetY = 3;
+
+      const gradient = ctx.createRadialGradient(cx - radius * 0.35, cy - radius * 0.35, radius * 0.1, cx, cy, radius);
+      if (type === PLAYER) {
+        gradient.addColorStop(0, '#5e5e5e');
+        gradient.addColorStop(0.45, '#1f1f1f');
+        gradient.addColorStop(1, '#000000');
+      } else {
+        gradient.addColorStop(0, '#ffffff');
+        gradient.addColorStop(0.55, '#f4f4f4');
+        gradient.addColorStop(1, '#bfbfbf');
+      }
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = type === PLAYER ? '#050505' : '#a8a8a8';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    function drawLastMoveMark(x, y) {
+      const cx = padding + x * cell;
+      const cy = padding + y * cell;
+      ctx.beginPath();
+      ctx.arc(cx, cy, cell * 0.1, 0, Math.PI * 2);
+      ctx.fillStyle = board[y][x] === PLAYER ? '#ffffff' : '#111111';
+      ctx.fill();
+    }
+
+    function getPointerPosition(event) {
+      const rect = canvas.getBoundingClientRect();
+      let clientX;
+      let clientY;
+
+      if (event.touches && event.touches.length > 0) {
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+      } else if (event.changedTouches && event.changedTouches.length > 0) {
+        clientX = event.changedTouches[0].clientX;
+        clientY = event.changedTouches[0].clientY;
+      } else {
+        clientX = event.clientX;
+        clientY = event.clientY;
+      }
+
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function handleInput(event) {
+      event.preventDefault();
+      if (gameOver || currentTurn !== PLAYER) return;
+
+      const pos = getPointerPosition(event);
+      const x = Math.round((pos.x - padding) / cell);
+      const y = Math.round((pos.y - padding) / cell);
+
+      if (!isInside(x, y)) return;
+
+      const intersectionX = padding + x * cell;
+      const intersectionY = padding + y * cell;
+      const distance = Math.hypot(pos.x - intersectionX, pos.y - intersectionY);
+      if (distance > cell * 0.48) return;
+      if (board[y][x] !== EMPTY) return;
+
+      placeStone(x, y, PLAYER);
+
+      if (finishCheck(x, y, PLAYER, '당신이 이겼습니다.')) return;
+      currentTurn = AI;
+      statusText.textContent = 'AI가 생각 중입니다...';
+      setTimeout(aiMove, 280);
+    }
+
+    function placeStone(x, y, type) {
+      board[y][x] = type;
+      lastMove = { x, y };
+      drawBoard();
+    }
+
+    function aiMove() {
+      if (gameOver) return;
+      const move = getBestMove();
+      if (!move) {
+        statusText.textContent = '무승부입니다.';
+        gameOver = true;
+        return;
+      }
+
+      placeStone(move.x, move.y, AI);
+      if (finishCheck(move.x, move.y, AI, 'AI가 이겼습니다.')) return;
+
+      currentTurn = PLAYER;
+      statusText.textContent = '당신 차례입니다. 흑돌을 놓으세요.';
+    }
+
+    function finishCheck(x, y, type, message) {
+      if (checkWin(x, y, type)) {
+        statusText.textContent = message;
+        gameOver = true;
+        drawWinningLine(x, y, type);
+        return true;
+      }
+      if (isBoardFull()) {
+        statusText.textContent = '무승부입니다.';
+        gameOver = true;
+        return true;
+      }
+      return false;
+    }
+
+    function drawWinningLine(x, y, type) {
+      for (const [dx, dy] of directions) {
+        const stones = collectLineStones(x, y, dx, dy, type);
+        if (stones.length >= WIN_COUNT) {
+          const first = stones[0];
+          const last = stones[stones.length - 1];
+          ctx.beginPath();
+          ctx.moveTo(padding + first.x * cell, padding + first.y * cell);
+          ctx.lineTo(padding + last.x * cell, padding + last.y * cell);
+          ctx.strokeStyle = '#d32020';
+          ctx.lineWidth = 5;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+          return;
+        }
+      }
+    }
+
+    function collectLineStones(x, y, dx, dy, type) {
+      const stones = [{ x, y }];
+      let nx = x + dx;
+      let ny = y + dy;
+      while (isInside(nx, ny) && board[ny][nx] === type) {
+        stones.push({ x: nx, y: ny });
+        nx += dx;
+        ny += dy;
+      }
+      nx = x - dx;
+      ny = y - dy;
+      while (isInside(nx, ny) && board[ny][nx] === type) {
+        stones.unshift({ x: nx, y: ny });
+        nx -= dx;
+        ny -= dy;
+      }
+      return stones;
+    }
+
+    function checkWin(x, y, type) {
+      return directions.some(([dx, dy]) => countConnected(x, y, dx, dy, type) >= WIN_COUNT);
+    }
+
+    function countConnected(x, y, dx, dy, type) {
+      let count = 1;
+      count += countDirection(x, y, dx, dy, type);
+      count += countDirection(x, y, -dx, -dy, type);
+      return count;
+    }
+
+    function countDirection(x, y, dx, dy, type) {
+      let count = 0;
+      let nx = x + dx;
+      let ny = y + dy;
+      while (isInside(nx, ny) && board[ny][nx] === type) {
+        count++;
+        nx += dx;
+        ny += dy;
+      }
+      return count;
+    }
+
+    function getBestMove() {
+      const candidates = getCandidateMoves();
+      if (candidates.length === 0) return { x: Math.floor(SIZE / 2), y: Math.floor(SIZE / 2) };
+
+      let best = null;
+      let bestScore = -Infinity;
+
+      for (const move of candidates) {
+        const { x, y } = move;
+
+        board[y][x] = AI;
+        if (checkWin(x, y, AI)) {
+          board[y][x] = EMPTY;
+          return { x, y };
+        }
+        board[y][x] = EMPTY;
+
+        board[y][x] = PLAYER;
+        if (checkWin(x, y, PLAYER)) {
+          board[y][x] = EMPTY;
+          return { x, y };
+        }
+        board[y][x] = EMPTY;
+      }
+
+      for (const move of candidates) {
+        const { x, y } = move;
+        const attackScore = evaluateMove(x, y, AI);
+        const defenseScore = evaluateMove(x, y, PLAYER) * 1.18;
+        const centerScore = getCenterScore(x, y);
+        const neighborScore = getNeighborScore(x, y);
+        const randomTiny = Math.random() * 3;
+        const total = attackScore + defenseScore + centerScore + neighborScore + randomTiny;
+
+        if (total > bestScore) {
+          bestScore = total;
+          best = { x, y };
+        }
+      }
+
+      return best;
+    }
+
+    function getCandidateMoves() {
+      const set = new Set();
+      let hasStone = false;
+
+      for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+          if (board[y][x] !== EMPTY) {
+            hasStone = true;
+            for (let dy = -2; dy <= 2; dy++) {
+              for (let dx = -2; dx <= 2; dx++) {
+                const nx = x + dx;
+                const ny = y + dy;
+                if (isInside(nx, ny) && board[ny][nx] === EMPTY) {
+                  set.add(nx + ',' + ny);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (!hasStone) {
+        return [
+          { x: 4, y: 4 },
+          { x: 5, y: 5 },
+          { x: 4, y: 5 },
+          { x: 5, y: 4 }
+        ];
+      }
+
+      return Array.from(set).map(key => {
+        const [x, y] = key.split(',').map(Number);
+        return { x, y };
+      });
+    }
+
+    function evaluateMove(x, y, type) {
+      let score = 0;
+      board[y][x] = type;
+
+      for (const [dx, dy] of directions) {
+        const line = analyzeLine(x, y, dx, dy, type);
+        score += patternScore(line.count, line.openEnds, line.gaps);
+      }
+
+      board[y][x] = EMPTY;
+      return score;
+    }
+
+    function analyzeLine(x, y, dx, dy, type) {
+      let count = 1;
+      let openEnds = 0;
+      let gaps = 0;
+
+      let nx = x + dx;
+      let ny = y + dy;
+      let skipped = false;
+      while (isInside(nx, ny)) {
+        if (board[ny][nx] === type) {
+          count++;
+        } else if (board[ny][nx] === EMPTY && !skipped) {
+          const tx = nx + dx;
+          const ty = ny + dy;
+          if (isInside(tx, ty) && board[ty][tx] === type) {
+            gaps++;
+            skipped = true;
+          } else {
+            openEnds++;
+            break;
+          }
+        } else {
+          break;
+        }
+        nx += dx;
+        ny += dy;
+      }
+
+      nx = x - dx;
+      ny = y - dy;
+      skipped = false;
+      while (isInside(nx, ny)) {
+        if (board[ny][nx] === type) {
+          count++;
+        } else if (board[ny][nx] === EMPTY && !skipped) {
+          const tx = nx - dx;
+          const ty = ny - dy;
+          if (isInside(tx, ty) && board[ty][tx] === type) {
+            gaps++;
+            skipped = true;
+          } else {
+            openEnds++;
+            break;
+          }
+        } else {
+          break;
+        }
+        nx -= dx;
+        ny -= dy;
+      }
+
+      return { count, openEnds, gaps };
+    }
+
+    function patternScore(count, openEnds, gaps) {
+      if (count >= 5) return 1000000;
+      if (count === 4 && openEnds >= 1) return 120000;
+      if (count === 4 && gaps >= 1) return 90000;
+      if (count === 3 && openEnds === 2) return 35000;
+      if (count === 3 && openEnds === 1) return 9000;
+      if (count === 3 && gaps >= 1) return 8000;
+      if (count === 2 && openEnds === 2) return 2600;
+      if (count === 2 && openEnds === 1) return 600;
+      if (count === 1 && openEnds === 2) return 80;
+      return 10;
+    }
+
+    function getCenterScore(x, y) {
+      const center = (SIZE - 1) / 2;
+      const dist = Math.hypot(x - center, y - center);
+      return Math.max(0, 70 - dist * 12);
+    }
+
+    function getNeighborScore(x, y) {
+      let score = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (!isInside(nx, ny)) continue;
+          if (board[ny][nx] === AI) score += 25;
+          if (board[ny][nx] === PLAYER) score += 18;
+        }
+      }
+      return score;
+    }
+
+    function isInside(x, y) {
+      return x >= 0 && x < SIZE && y >= 0 && y < SIZE;
+    }
+
+    function isBoardFull() {
+      return board.every(row => row.every(cell => cell !== EMPTY));
+    }
+
+    canvas.addEventListener('click', handleInput);
+    canvas.addEventListener('touchstart', handleInput, { passive: false });
+    window.addEventListener('resize', initCanvas);
+
+    resetGame();
+    initCanvas();
+  </script>
 </body>
 </html>
