@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#d9a441" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="모바일 바둑" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+
+  <title>모바일 바둑</title>
+
+  <style>
+    :root {
+      --board: #d9a441;
+      --line: #3b2410;
+      --bg: #111;
+      --text: #f5f5f5;
+      --muted: #aaa;
+      --accent: #c00001;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow-x: hidden;
+      overscroll-behavior: none;
+    }
+
+    body {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      padding: max(14px, env(safe-area-inset-top)) 16px 10px;
+      background: #141414;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .title {
+      min-width: 0;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: -0.03em;
+    }
+
+    .title p {
+      margin: 3px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .turn-badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 11px;
+      background: #222;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .mini-stone {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .mini-stone.black {
+      background: #050505;
+      border: 1px solid #555;
+    }
+
+    .mini-stone.white {
+      background: #f3f3f3;
+      border: 1px solid #bdbdbd;
+    }
+
+    .board-area {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      padding: 10px;
+      min-height: 0;
+    }
+
+    .board {
+      position: relative;
+      width: min(96vw, 96dvh, 760px);
+      aspect-ratio: 1 / 1;
+      background: var(--board);
+      border-radius: 10px;
+      box-shadow:
+        inset 0 0 0 4px rgba(85, 45, 11, 0.18),
+        inset 0 0 28px rgba(80, 43, 7, 0.26),
+        0 10px 30px rgba(0, 0, 0, 0.35);
+      touch-action: manipulation;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .grid-line {
+      position: absolute;
+      background: var(--line);
+      opacity: 0.86;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .grid-line.h {
+      height: 1.2px;
+      left: 5.2631578947%;
+      right: 5.2631578947%;
+      transform: translateY(-50%);
+    }
+
+    .grid-line.v {
+      width: 1.2px;
+      top: 5.2631578947%;
+      bottom: 5.2631578947%;
+      transform: translateX(-50%);
+    }
+
+    .star {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--line);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .point {
+      position: absolute;
+      width: 5.3%;
+      height: 5.3%;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      z-index: 4;
+      padding: 0;
+    }
+
+    .point:active::after {
+      content: "";
+      position: absolute;
+      inset: 20%;
+      border-radius: 999px;
+      background: rgba(192, 0, 1, 0.42);
+    }
+
+    .stone {
+      position: absolute;
+      width: 4.95%;
+      height: 4.95%;
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .stone.black {
+      background: radial-gradient(circle at 34% 28%, #666 0%, #222 22%, #000 70%);
+      box-shadow: 0 3px 7px rgba(0, 0, 0, 0.45);
+    }
+
+    .stone.white {
+      background: radial-gradient(circle at 32% 26%, #fff 0%, #f8f8f8 35%, #d1d1d1 100%);
+      box-shadow:
+        0 3px 7px rgba(0, 0, 0, 0.32),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.14);
+    }
+
+    .last-move {
+      position: absolute;
+      width: 1.45%;
+      height: 1.45%;
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      background: var(--accent);
+      z-index: 6;
+      pointer-events: none;
+      box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.7);
+    }
+
+    .bottom-panel {
+      padding: 10px 12px max(12px, env(safe-area-inset-bottom));
+      background: #141414;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: grid;
+      gap: 9px;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .info-row strong {
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 6px;
+      background: #2d2d2d;
+      color: #fff;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.98);
+      background: #3b3b3b;
+    }
+
+    button.primary {
+      background: var(--accent);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(82px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      max-width: calc(100vw - 32px);
+      padding: 10px 13px;
+      background: rgba(0, 0, 0, 0.82);
+      color: #fff;
+      border-radius: 999px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+      z-index: 30;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    .install-hint {
+      display: none;
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: calc(76px + env(safe-area-inset-bottom));
+      background: rgba(20, 20, 20, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      padding: 12px 13px;
+      z-index: 25;
+      font-size: 13px;
+      line-height: 1.45;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+
+    .install-hint button {
+      margin-top: 8px;
+      width: 100%;
+      background: var(--accent);
+    }
+
+    @media (display-mode: standalone) {
+      .title p::after {
+        content: " · 앱 실행 중";
+      }
+    }
+
+    @media (min-width: 900px) {
+      body {
+        max-width: 940px;
+        margin: 0 auto;
+        border-left: 1px solid rgba(255,255,255,0.08);
+        border-right: 1px solid rgba(255,255,255,0.08);
+      }
+
+      .board-area {
+        padding: 18px;
+      }
+
+      .topbar {
+        padding-inline: 22px;
+      }
+
+      .bottom-panel {
+        padding-inline: 22px;
+      }
+    }
+
+    @media (max-height: 680px) {
+      .title p {
+        display: none;
+      }
+
+      .topbar {
+        padding-top: 10px;
+        padding-bottom: 8px;
+      }
+
+      .bottom-panel {
+        padding-top: 8px;
+      }
+
+      .board {
+        width: min(96vw, 78dvh, 760px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="title">
+      <h1>모바일 바둑</h1>
+      <p>홈 화면에 추가해서 앱처럼 실행</p>
+    </div>
+
+    <div class="turn-badge">
+      <span id="turnStone" class="mini-stone black"></span>
+      <span id="turnText">흑 차례</span>
+    </div>
+  </header>
+
+  <main class="board-area">
+    <div id="board" class="board" aria-label="바둑판"></div>
+  </main>
+
+  <section class="bottom-panel">
+    <div class="info-row">
+      <span>수순 <strong><span id="moveCount">0</span>수</strong></span>
+      <span>잡은 돌 <strong>흑 <span id="blackCaptures">0</span> · 백 <span id="whiteCaptures">0</span></strong></span>
+    </div>
+
+    <div class="buttons">
+      <button id="passBtn" class="primary">패스</button>
+      <button id="undoBtn">무르기</button>
+      <button id="scoreBtn">계가</button>
+      <button id="resetBtn">새판</button>
+    </div>
+  </section>
+
+  <div id="installHint" class="install-hint">
+    안드로이드는 Chrome 메뉴에서 <b>홈 화면에 추가</b>를 누르면 앱처럼 설치됩니다.<br>
+    아이폰은 Safari 공유 버튼 → <b>홈 화면에 추가</b>를 누르세요.
+    <button id="closeHintBtn">확인</button>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const SIZE = 19;
+    const EMPTY = 0;
+    const BLACK = 1;
+    const WHITE = 2;
+
+    const boardEl = document.getElementById("board");
+    const turnStoneEl = document.getElementById("turnStone");
+    const turnTextEl = document.getElementById("turnText");
+    const blackCapturesEl = document.getElementById("blackCaptures");
+    const whiteCapturesEl = document.getElementById("whiteCaptures");
+    const moveCountEl = document.getElementById("moveCount");
+    const toastEl = document.getElementById("toast");
+    const installHintEl = document.getElementById("installHint");
+
+    let board = createBoard();
+    let turn = BLACK;
+    let captures = { [BLACK]: 0, [WHITE]: 0 };
+    let moveCount = 0;
+    let lastMove = null;
+    let previousHash = null;
+    let history = [];
+    let toastTimer = null;
+
+    function createBoard() {
+      return Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
+    }
+
+    function opponent(color) {
+      return color === BLACK ? WHITE : BLACK;
+    }
+
+    function posToPercent(i) {
+      return (i / (SIZE - 1)) * 89.4736842106 + 5.2631578947;
+    }
+
+    function renderStaticBoard() {
+      boardEl.innerHTML = "";
+
+      for (let i = 0; i < SIZE; i++) {
+        const h = document.createElement("div");
+        h.className = "grid-line h";
+        h.style.top = `${posToPercent(i)}%`;
+        boardEl.appendChild(h);
+
+        const v = document.createElement("div");
+        v.className = "grid-line v";
+        v.style.left = `${posToPercent(i)}%`;
+        boardEl.appendChild(v);
+      }
+
+      const stars = [3, 9, 15];
+      for (const r of stars) {
+        for (const c of stars) {
+          const s = document.createElement("div");
+          s.className = "star";
+          s.style.top = `${posToPercent(r)}%`;
+          s.style.left = `${posToPercent(c)}%`;
+          boardEl.appendChild(s);
+        }
+      }
+
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          const p = document.createElement("button");
+          p.className = "point";
+          p.style.top = `${posToPercent(r)}%`;
+          p.style.left = `${posToPercent(c)}%`;
+          p.setAttribute("aria-label", `${r + 1}행 ${c + 1}열`);
+          p.addEventListener("click", () => playMove(r, c));
+          boardEl.appendChild(p);
+        }
+      }
+    }
+
+    function renderStones() {
+      document.querySelectorAll(".stone, .last-move").forEach(el => el.remove());
+
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (board[r][c] === EMPTY) continue;
+
+          const stone = document.createElement("div");
+          stone.className = `stone ${board[r][c] === BLACK ? "black" : "white"}`;
+          stone.style.top = `${posToPercent(r)}%`;
+          stone.style.left = `${posToPercent(c)}%`;
+          boardEl.appendChild(stone);
+        }
+      }
+
+      if (lastMove) {
+        const mark = document.createElement("div");
+        mark.className = "last-move";
+        mark.style.top = `${posToPercent(lastMove.r)}%`;
+        mark.style.left = `${posToPercent(lastMove.c)}%`;
+        boardEl.appendChild(mark);
+      }
+
+      turnStoneEl.className = `mini-stone ${turn === BLACK ? "black" : "white"}`;
+      turnTextEl.textContent = turn === BLACK ? "흑 차례" : "백 차례";
+      blackCapturesEl.textContent = captures[BLACK];
+      whiteCapturesEl.textContent = captures[WHITE];
+      moveCountEl.textContent = moveCount;
+
+      saveState();
+    }
+
+    function inBounds(r, c) {
+      return r >= 0 && r < SIZE && c >= 0 && c < SIZE;
+    }
+
+    function neighbors(r, c) {
+      return [[r-1,c], [r+1,c], [r,c-1], [r,c+1]].filter(([nr, nc]) => inBounds(nr, nc));
+    }
+
+    function getGroup(r, c, targetBoard = board) {
+      const color = targetBoard[r][c];
+      const visited = new Set();
+      const stones = [];
+      const liberties = new Set();
+      const stack = [[r, c]];
+
+      while (stack.length) {
+        const [cr, cc] = stack.pop();
+        const key = `${cr},${cc}`;
+        if (visited.has(key)) continue;
+        visited.add(key);
+        stones.push([cr, cc]);
+
+        for (const [nr, nc] of neighbors(cr, cc)) {
+          if (targetBoard[nr][nc] === EMPTY) {
+            liberties.add(`${nr},${nc}`);
+          } else if (targetBoard[nr][nc] === color) {
+            stack.push([nr, nc]);
+          }
+        }
+      }
+
+      return { stones, liberties };
+    }
+
+    function cloneBoard(source) {
+      return source.map(row => [...row]);
+    }
+
+    function boardHash(targetBoard = board) {
+      return targetBoard.map(row => row.join("")).join("|");
+    }
+
+    function saveHistory() {
+      history.push({
+        board: cloneBoard(board),
+        turn,
+        captures: { ...captures },
+        moveCount,
+        lastMove: lastMove ? { ...lastMove } : null,
+        previousHash
+      });
+
+      if (history.length > 100) history.shift();
+    }
+
+    function playMove(r, c) {
+      if (board[r][c] !== EMPTY) {
+        showToast("이미 돌이 있는 자리입니다.");
+        return;
+      }
+
+      saveHistory();
+
+      const beforeHash = boardHash();
+      const testBoard = cloneBoard(board);
+      testBoard[r][c] = turn;
+
+      let captured = 0;
+      const enemy = opponent(turn);
+      const checkedEnemy = new Set();
+
+      for (const [nr, nc] of neighbors(r, c)) {
+        if (testBoard[nr][nc] !== enemy) continue;
+        const key = `${nr},${nc}`;
+        if (checkedEnemy.has(key)) continue;
+
+        const group = getGroup(nr, nc, testBoard);
+        group.stones.forEach(([gr, gc]) => checkedEnemy.add(`${gr},${gc}`));
+
+        if (group.liberties.size === 0) {
+          for (const [gr, gc] of group.stones) {
+            testBoard[gr][gc] = EMPTY;
+            captured++;
+          }
+        }
+      }
+
+      const myGroup = getGroup(r, c, testBoard);
+      if (myGroup.liberties.size === 0) {
+        history.pop();
+        showToast("자살수는 둘 수 없습니다.");
+        return;
+      }
+
+      const newHash = boardHash(testBoard);
+      if (newHash === previousHash) {
+        history.pop();
+        showToast("패 규칙으로 바로 되따낼 수 없습니다.");
+        return;
+      }
+
+      board = testBoard;
+      captures[turn] += captured;
+      lastMove = { r, c };
+      moveCount++;
+      previousHash = beforeHash;
+
+      if (captured > 0) {
+        showToast(`${captured}점 따냈습니다.`);
+      }
+
+      turn = enemy;
+      renderStones();
+    }
+
+    function passTurn() {
+      saveHistory();
+      moveCount++;
+      previousHash = boardHash();
+      lastMove = null;
+      showToast(`${turn === BLACK ? "흑" : "백"} 패스`);
+      turn = opponent(turn);
+      renderStones();
+    }
+
+    function undo() {
+      const prev = history.pop();
+      if (!prev) {
+        showToast("무를 수 있는 수가 없습니다.");
+        return;
+      }
+
+      board = prev.board;
+      turn = prev.turn;
+      captures = prev.captures;
+      moveCount = prev.moveCount;
+      lastMove = prev.lastMove;
+      previousHash = prev.previousHash;
+      showToast("한 수 물렀습니다.");
+      renderStones();
+    }
+
+    function resetGame() {
+      if (moveCount > 0 && !confirm("현재 대국을 지우고 새 판을 시작할까요?")) return;
+
+      board = createBoard();
+      turn = BLACK;
+      captures = { [BLACK]: 0, [WHITE]: 0 };
+      moveCount = 0;
+      lastMove = null;
+      previousHash = null;
+      history = [];
+      localStorage.removeItem("mobile-go-state-v1");
+      showToast("새 판을 시작합니다.");
+      renderStones();
+    }
+
+    function simpleScore() {
+      const visited = new Set();
+      let blackTerritory = 0;
+      let whiteTerritory = 0;
+      let blackStones = 0;
+      let whiteStones = 0;
+
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (board[r][c] === BLACK) blackStones++;
+          if (board[r][c] === WHITE) whiteStones++;
+        }
+      }
+
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (board[r][c] !== EMPTY || visited.has(`${r},${c}`)) continue;
+
+          const region = [];
+          const borders = new Set();
+          const stack = [[r, c]];
+
+          while (stack.length) {
+            const [cr, cc] = stack.pop();
+            const key = `${cr},${cc}`;
+            if (visited.has(key)) continue;
+            visited.add(key);
+            region.push([cr, cc]);
+
+            for (const [nr, nc] of neighbors(cr, cc)) {
+              if (board[nr][nc] === EMPTY) {
+                stack.push([nr, nc]);
+              } else {
+                borders.add(board[nr][nc]);
+              }
+            }
+          }
+
+          if (borders.size === 1) {
+            if (borders.has(BLACK)) blackTerritory += region.length;
+            if (borders.has(WHITE)) whiteTerritory += region.length;
+          }
+        }
+      }
+
+      const blackScore = blackStones + blackTerritory + captures[BLACK];
+      const whiteScore = whiteStones + whiteTerritory + captures[WHITE] + 6.5;
+
+      alert(`간이 계가\n\n흑: ${blackScore}\n백: ${whiteScore}\n\n※ 정확한 사석 판정 전 단계의 간이 계산입니다.`);
+    }
+
+    function saveState() {
+      const state = {
+        board,
+        turn,
+        captures,
+        moveCount,
+        lastMove,
+        previousHash,
+        history
+      };
+      localStorage.setItem("mobile-go-state-v1", JSON.stringify(state));
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem("mobile-go-state-v1");
+      if (!raw) return false;
+
+      try {
+        const state = JSON.parse(raw);
+        if (!state.board || state.board.length !== SIZE) return false;
+
+        board = state.board;
+        turn = state.turn || BLACK;
+        captures = state.captures || { [BLACK]: 0, [WHITE]: 0 };
+        moveCount = state.moveCount || 0;
+        lastMove = state.lastMove || null;
+        previousHash = state.previousHash || null;
+        history = state.history || [];
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function showToast(message) {
+      clearTimeout(toastTimer);
+      toastEl.textContent = message;
+      toastEl.classList.add("show");
+      toastTimer = setTimeout(() => {
+        toastEl.classList.remove("show");
+      }, 1300);
+    }
+
+    function maybeShowInstallHint() {
+      const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+      const dismissed = localStorage.getItem("mobile-go-install-hint-dismissed") === "1";
+
+      if (!standalone && !dismissed) {
+        setTimeout(() => {
+          installHintEl.style.display = "block";
+        }, 800);
+      }
+    }
+
+    document.getElementById("passBtn").addEventListener("click", passTurn);
+    document.getElementById("undoBtn").addEventListener("click", undo);
+    document.getElementById("resetBtn").addEventListener("click", resetGame);
+    document.getElementById("scoreBtn").addEventListener("click", simpleScore);
+
+    document.getElementById("closeHintBtn").addEventListener("click", () => {
+      installHintEl.style.display = "none";
+      localStorage.setItem("mobile-go-install-hint-dismissed", "1");
+    });
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
+    }
+
+    renderStaticBoard();
+
+    if (!loadState()) {
+      board = createBoard();
+      turn = BLACK;
+      captures = { [BLACK]: 0, [WHITE]: 0 };
+      moveCount = 0;
+      lastMove = null;
+      previousHash = null;
+      history = [];
+    }
+
+    renderStones();
+    maybeShowInstallHint();
+  </script>
+</body>
+</html>
