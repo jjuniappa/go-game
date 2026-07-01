@@ -1,13 +1,13 @@
 {
-  "name": "Coin Catcher",
-  "short_name": "CoinCatch",
-  "description": "떨어지는 동전은 받고 돌은 피하는 모바일 캐주얼 게임",
+  "name": "Tap Drift",
+  "short_name": "TapDrift",
+  "description": "탑뷰 원터치 드리프트 게임",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#080808",
-  "theme_color": "#111111",
+  "background_color": "#070707",
+  "theme_color": "#070707",
   "icons": [
     {
       "src": "./icons/icon-192.png",
