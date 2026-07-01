@@ -1,7 +1,7 @@
 {
   "name": "Tap Drift",
   "short_name": "TapDrift",
-  "description": "차가 지나가면 흰색 경계선이 사라지는 외길 드리프트 게임",
+  "description": "빨간 네온 외길 드리프트 게임",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
