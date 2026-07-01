@@ -1,7 +1,7 @@
 {
-  "name": "Beat Tap",
-  "short_name": "BeatTap",
-  "description": "내장 음악으로 플레이하는 모바일 리듬게임",
+  "name": "Coin Catcher",
+  "short_name": "CoinCatch",
+  "description": "떨어지는 동전은 받고 돌은 피하는 모바일 캐주얼 게임",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
