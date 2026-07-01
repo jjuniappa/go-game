@@ -1,7 +1,7 @@
 {
   "name": "Tap Drift",
   "short_name": "TapDrift",
-  "description": "기본차 1종으로 플레이하는 Tap Drift",
+  "description": "난이도 선택 없이 자동으로 쉬움, 노멀, 어려움으로 진행되는 Tap Drift",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
