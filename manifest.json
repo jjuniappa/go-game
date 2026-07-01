@@ -1,7 +1,7 @@
 {
   "name": "모바일 바둑",
   "short_name": "바둑",
-  "description": "휴대폰 홈 화면에서 실행하는 간단한 19x19 바둑 게임",
+  "description": "사람 대국과 AI 대국을 지원하는 19x19 모바일 바둑 게임",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
