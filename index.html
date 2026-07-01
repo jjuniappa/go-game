@@ -34,6 +34,16 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 .btn{width:100%;border:0;border-radius:16px;padding:14px 12px;background:var(--accent);color:#fff;font-weight:950;font-size:16px;margin-top:10px;cursor:pointer}
 .sub-btn{background:#2d2d2d;font-size:14px;padding:12px}
 .howto{margin-top:12px;color:#999;font-size:12px;line-height:1.55}
+.vehicle-title{margin:16px 0 8px;font-size:13px;color:#ddd;font-weight:900}
+.vehicle-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:8px}
+.vehicle-btn{height:62px;border-radius:15px;border:1px solid rgba(255,255,255,.10);background:#242424;color:#fff;font-weight:900;font-size:10px;display:grid;grid-template-rows:1fr auto;align-items:center;justify-items:center;padding:6px 3px;cursor:pointer}
+.vehicle-btn.active{border-color:#c00001;background:rgba(192,0,1,.22);box-shadow:0 0 0 1px rgba(192,0,1,.55),0 0 18px rgba(192,0,1,.18)}
+.vehicle-icon{width:34px;height:24px;position:relative}
+.vehicle-icon.car{border-radius:7px;background:#f3f3f3}.vehicle-icon.car:after{content:"";position:absolute;left:10px;top:5px;width:15px;height:13px;border-radius:4px;background:#c00001}
+.vehicle-icon.super{clip-path:polygon(0 64%,18% 34%,66% 22%,100% 58%,88% 82%,10% 82%);background:#ff2f2f}
+.vehicle-icon.truck{background:#d9d9d9;border-radius:3px}.vehicle-icon.truck:before{content:"";position:absolute;right:-7px;bottom:0;width:13px;height:16px;background:#bcbcbc;border-radius:3px}
+.vehicle-icon.bike{height:20px}.vehicle-icon.bike:before,.vehicle-icon.bike:after{content:"";position:absolute;bottom:0;width:12px;height:12px;border-radius:50%;border:3px solid #f4f4f4}.vehicle-icon.bike:before{left:1px}.vehicle-icon.bike:after{right:1px}.vehicle-icon.bike span{position:absolute;left:12px;top:5px;width:12px;height:6px;background:#c00001;border-radius:999px}
+.vehicle-icon.taxi{border-radius:7px;background:#ffd35f}.vehicle-icon.taxi:after{content:"TAXI";position:absolute;left:5px;top:7px;color:#111;font-size:7px;font-weight:1000}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
 .stat{background:#222;border:1px solid rgba(255,255,255,.08);border-radius:15px;padding:12px}
 .stat small{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}
@@ -67,10 +77,20 @@ body{min-height:100dvh;display:flex;flex-direction:column}
   <div class="card">
     <h2>Tap Drift</h2>
     <p>빨간 외길을 따라 달립니다. 처음은 쉽고, 시간이 지날수록 속도와 코너 빈도가 자동으로 올라갑니다.</p>
+
+    <div class="vehicle-title">차량 선택</div>
+    <div class="vehicle-grid">
+      <button class="vehicle-btn active" data-vehicle="basic"><div class="vehicle-icon car"></div><span>기본차</span></button>
+      <button class="vehicle-btn" data-vehicle="super"><div class="vehicle-icon super"></div><span>슈퍼카</span></button>
+      <button class="vehicle-btn" data-vehicle="truck"><div class="vehicle-icon truck"></div><span>트럭</span></button>
+      <button class="vehicle-btn" data-vehicle="bike"><div class="vehicle-icon bike"><span></span></div><span>오토바이</span></button>
+      <button class="vehicle-btn" data-vehicle="taxi"><div class="vehicle-icon taxi"></div><span>택시</span></button>
+    </div>
+
     <button id="startBtn" class="btn">게임 시작</button>
     <div class="howto">
       조작법: 화면 아무 곳이나 터치 = 90도 방향 전환<br>
-      난이도 선택은 없습니다. EASY → NORMAL → HARD 순서로 자동 진행됩니다.
+      차량은 외형만 다르고, 성능과 충돌 판정은 모두 동일합니다.
     </div>
   </div>
 </section>
@@ -112,7 +132,8 @@ const flash=document.getElementById("flash");
 
 let W=0,H=0,dpr=1;
 let running=false,raf=null,last=0;
-let best=Number(localStorage.getItem("tap-drift-no-menu-best")||0);
+let best=Number(localStorage.getItem("tap-drift-vehicle-best")||0);
+let selectedVehicle=localStorage.getItem("tap-drift-vehicle")||"basic";
 let car,path,currentSeg,camera,score,distance,speed,roadWidth,totalTime,stage;
 let particles=[];
 
@@ -303,7 +324,7 @@ function crash(){
   void flash.offsetWidth;
   flash.classList.add("show");
   best=Math.max(best,score);
-  localStorage.setItem("tap-drift-no-menu-best",String(best));
+  localStorage.setItem("tap-drift-vehicle-best",String(best));
   resultScore.textContent=score.toLocaleString();
   resultBest.textContent=best.toLocaleString();
   resultDistance.textContent=Math.floor(distance)+"m";
@@ -337,7 +358,7 @@ function draw(){
   drawGrid();
   drawRoad();
   drawParticles();
-  drawCar();
+  drawVehicle();
 }
 
 function drawGrid(){
@@ -382,24 +403,112 @@ function drawRoad(){
   ctx.restore();
 }
 
-function drawCar(){
+function drawVehicle(){
   const p=worldToScreen(car.x,car.y);
   ctx.save();
   ctx.translate(p.x,p.y);
   ctx.rotate(car.angle);
   ctx.shadowColor="rgba(255,255,255,.28)";
   ctx.shadowBlur=9;
+
+  if(selectedVehicle==="super") drawSuperCar();
+  else if(selectedVehicle==="truck") drawTruck();
+  else if(selectedVehicle==="bike") drawBike();
+  else if(selectedVehicle==="taxi") drawTaxi();
+  else drawBasicCar();
+
+  ctx.restore();
+}
+
+function drawBasicCar(){
   ctx.fillStyle="#f3f3f3";
   roundRect(ctx,-carLength/2,-carWidth/2,carLength,carWidth,5);
   ctx.fill();
   ctx.fillStyle="#c00001";
   roundRect(ctx,-8,-8,17,16,4);
   ctx.fill();
-  ctx.fillStyle="#151515";
-  ctx.fillRect(-13,-14,7,4);ctx.fillRect(-13,10,7,4);ctx.fillRect(7,-14,7,4);ctx.fillRect(7,10,7,4);
+  drawWheels();
+  drawHeadlights();
+}
+
+function drawSuperCar(){
+  ctx.fillStyle="#ff3030";
+  ctx.beginPath();
+  ctx.moveTo(18,0);
+  ctx.lineTo(7,-11);
+  ctx.lineTo(-15,-9);
+  ctx.lineTo(-19,0);
+  ctx.lineTo(-15,9);
+  ctx.lineTo(7,11);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle="#111";
+  roundRect(ctx,-3,-7,12,14,4);
+  ctx.fill();
+  ctx.fillStyle="#fff";
+  ctx.fillRect(13,-5,4,3);
+  ctx.fillRect(13,2,4,3);
+}
+
+function drawTruck(){
+  ctx.fillStyle="#d8d8d8";
+  roundRect(ctx,-18,-11,25,22,4);
+  ctx.fill();
+  ctx.fillStyle="#b7b7b7";
+  roundRect(ctx,5,-10,15,20,3);
+  ctx.fill();
+  ctx.fillStyle="#c00001";
+  roundRect(ctx,7,-7,8,14,3);
+  ctx.fill();
+  drawWheels();
+}
+
+function drawBike(){
+  ctx.strokeStyle="#f4f4f4";
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.arc(-10,8,5,0,Math.PI*2);
+  ctx.arc(10,8,5,0,Math.PI*2);
+  ctx.stroke();
+  ctx.fillStyle="#c00001";
+  roundRect(ctx,-8,-4,18,8,4);
+  ctx.fill();
+  ctx.strokeStyle="#f4f4f4";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(6,-3);
+  ctx.lineTo(15,-10);
+  ctx.stroke();
+}
+
+function drawTaxi(){
   ctx.fillStyle="#ffd35f";
-  ctx.fillRect(13,-6,4,4);ctx.fillRect(13,2,4,4);
-  ctx.restore();
+  roundRect(ctx,-carLength/2,-carWidth/2,carLength,carWidth,5);
+  ctx.fill();
+  ctx.fillStyle="#111";
+  roundRect(ctx,-7,-7,15,14,4);
+  ctx.fill();
+  ctx.fillStyle="#fff";
+  ctx.font="bold 7px system-ui";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.fillText("TAXI",-6,0);
+  drawWheels();
+  drawHeadlights();
+}
+
+function drawWheels(){
+  ctx.fillStyle="#151515";
+  ctx.fillRect(-13,-14,7,4);
+  ctx.fillRect(-13,10,7,4);
+  ctx.fillRect(7,-14,7,4);
+  ctx.fillRect(7,10,7,4);
+}
+
+function drawHeadlights(){
+  ctx.fillStyle="#ffd35f";
+  ctx.fillRect(13,-6,4,4);
+  ctx.fillRect(13,2,4,4);
 }
 
 function roundRect(ctx,x,y,w,h,r){
@@ -424,12 +533,28 @@ function updateTexts(){
   stageText.textContent=stages[stage].label;
 }
 
+function refreshVehicleButtons(){
+  document.querySelectorAll(".vehicle-btn").forEach(btn=>{
+    btn.classList.toggle("active",btn.dataset.vehicle===selectedVehicle);
+  });
+}
+
+document.querySelectorAll(".vehicle-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    selectedVehicle=btn.dataset.vehicle;
+    localStorage.setItem("tap-drift-vehicle",selectedVehicle);
+    refreshVehicleButtons();
+    draw();
+  });
+});
+
 tapZone.addEventListener("pointerdown",e=>{e.preventDefault();tap()});
 startBtn.addEventListener("click",startGame);
 retryBtn.addEventListener("click",startGame);
 homeBtn.addEventListener("click",()=>{resultOverlay.classList.add("hidden");startOverlay.classList.remove("hidden")});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&running)crash()});
 if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("./service-worker.js").catch(()=>{})})}
+refreshVehicleButtons();
 resetGame();
 draw();
 </script>
