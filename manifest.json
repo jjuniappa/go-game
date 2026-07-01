@@ -1,7 +1,7 @@
 {
   "name": "Tap Drift",
   "short_name": "TapDrift",
-  "description": "진짜 1차선 외길 원터치 드리프트 게임",
+  "description": "차가 지나가면 흰색 경계선이 사라지는 외길 드리프트 게임",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
