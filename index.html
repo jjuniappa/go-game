@@ -19,7 +19,6 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 .title p{margin:2px 0 0;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:54vw}
 .scorebox{text-align:right;font-size:13px;line-height:1.38;font-weight:950}
 .scorebox span{color:var(--muted);font-weight:700}
-.stage{display:inline-block;margin-left:6px;color:#fff;background:#c00001;border-radius:999px;padding:1px 6px;font-size:10px;vertical-align:middle}
 .game{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:none;background:radial-gradient(circle at 50% 50%,rgba(192,0,1,.10),transparent 34%),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(0deg,rgba(255,255,255,.018) 1px,transparent 1px),#070707;background-size:auto,42px 42px,42px 42px}
 .canvas{position:absolute;inset:0;width:100%;height:100%}
 .tap-zone{position:absolute;inset:0;z-index:4}
@@ -40,8 +39,8 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 .vehicle-btn.active{border-color:#c00001;background:rgba(192,0,1,.22);box-shadow:0 0 0 1px rgba(192,0,1,.55),0 0 18px rgba(192,0,1,.18)}
 .vehicle-icon{width:34px;height:24px;position:relative}
 .vehicle-icon.car{border-radius:7px;background:#f3f3f3}.vehicle-icon.car:after{content:"";position:absolute;left:10px;top:5px;width:15px;height:13px;border-radius:4px;background:#c00001}
-.vehicle-icon.super{clip-path:polygon(0 64%,18% 34%,66% 22%,100% 58%,88% 82%,10% 82%);background:#ff2f2f}
-.vehicle-icon.truck{background:#d9d9d9;border-radius:3px}.vehicle-icon.truck:before{content:"";position:absolute;right:-7px;bottom:0;width:13px;height:16px;background:#bcbcbc;border-radius:3px}
+.vehicle-icon.super{border-radius:13px 13px 11px 11px;background:linear-gradient(180deg,#2d7dff 0%,#183f8f 100%);clip-path:polygon(14% 100%,6% 72%,10% 38%,26% 14%,74% 14%,90% 38%,94% 72%,86% 100%)}.vehicle-icon.super:before{content:"";position:absolute;left:11px;top:4px;width:12px;height:16px;border-radius:7px 7px 5px 5px;background:#10151f}.vehicle-icon.super:after{content:"";position:absolute;left:13px;top:2px;width:8px;height:6px;border:2px solid #d7eefc;border-bottom:none;border-radius:8px 8px 0 0}
+.vehicle-icon.truck{clip-path:polygon(6% 82%,16% 24%,76% 10%,96% 30%,88% 82%);background:linear-gradient(180deg,#bfc4c8 0%,#6f757b 100%)}.vehicle-icon.truck:before{content:"";position:absolute;left:11px;top:8px;width:12px;height:6px;background:#151515;transform:skewX(-28deg);opacity:.9}.vehicle-icon.truck:after{content:"";position:absolute;left:6px;bottom:2px;width:22px;height:2px;background:rgba(255,255,255,.45)}
 .vehicle-icon.bike{height:20px}.vehicle-icon.bike:before,.vehicle-icon.bike:after{content:"";position:absolute;bottom:0;width:12px;height:12px;border-radius:50%;border:3px solid #f4f4f4}.vehicle-icon.bike:before{left:1px}.vehicle-icon.bike:after{right:1px}.vehicle-icon.bike span{position:absolute;left:12px;top:5px;width:12px;height:6px;background:#c00001;border-radius:999px}
 .vehicle-icon.taxi{border-radius:7px;background:#ffd35f}.vehicle-icon.taxi:after{content:"TAXI";position:absolute;left:5px;top:7px;color:#111;font-size:7px;font-weight:1000}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
@@ -62,7 +61,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
   </div>
   <div class="scorebox">
     <div><span>SCORE</span> <b id="scoreText">0</b></div>
-    <div><span>BEST</span> <b id="bestText">0</b><span id="stageText" class="stage">EASY</span></div>
+    <div><span>BEST</span> <b id="bestText">0</b></div>
   </div>
 </header>
 
@@ -76,13 +75,13 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 <section id="startOverlay" class="overlay">
   <div class="card">
     <h2>Tap Drift</h2>
-    <p>빨간 외길을 따라 달립니다. 처음은 쉽고, 시간이 지날수록 속도와 코너 빈도가 자동으로 올라갑니다.</p>
+    <p>빨간 외길을 따라 달립니다. 코너 타이밍에 맞춰 터치해 방향을 바꾸세요.</p>
 
     <div class="vehicle-title">차량 선택</div>
     <div class="vehicle-grid">
       <button class="vehicle-btn active" data-vehicle="basic"><div class="vehicle-icon car"></div><span>기본차</span></button>
-      <button class="vehicle-btn" data-vehicle="super"><div class="vehicle-icon super"></div><span>슈퍼카</span></button>
-      <button class="vehicle-btn" data-vehicle="truck"><div class="vehicle-icon truck"></div><span>트럭</span></button>
+      <button class="vehicle-btn" data-vehicle="super"><div class="vehicle-icon super"></div><span>부가티</span></button>
+      <button class="vehicle-btn" data-vehicle="truck"><div class="vehicle-icon truck"></div><span>사이버트럭</span></button>
       <button class="vehicle-btn" data-vehicle="bike"><div class="vehicle-icon bike"><span></span></div><span>오토바이</span></button>
       <button class="vehicle-btn" data-vehicle="taxi"><div class="vehicle-icon taxi"></div><span>택시</span></button>
     </div>
@@ -90,7 +89,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
     <button id="startBtn" class="btn">게임 시작</button>
     <div class="howto">
       조작법: 화면 아무 곳이나 터치 = 90도 방향 전환<br>
-      차량은 외형만 다르고, 성능과 충돌 판정은 모두 동일합니다.
+      부가티·사이버트럭을 포함한 모든 차량은 외형만 다르고, 성능과 충돌 판정은 동일합니다.
     </div>
   </div>
 </section>
@@ -122,7 +121,6 @@ const retryBtn=document.getElementById("retryBtn");
 const homeBtn=document.getElementById("homeBtn");
 const scoreText=document.getElementById("scoreText");
 const bestText=document.getElementById("bestText");
-const stageText=document.getElementById("stageText");
 const resultScore=document.getElementById("resultScore");
 const resultBest=document.getElementById("resultBest");
 const resultDistance=document.getElementById("resultDistance");
@@ -232,7 +230,6 @@ function update(dt){
   const nextStage=getStageByTime();
   if(nextStage!==stage){
     stage=nextStage;
-    showJudge(stages[stage].label);
   }
   const cfg=getCurrentCfg();
   speed+=cfg.accel*dt;
@@ -432,35 +429,110 @@ function drawBasicCar(){
 }
 
 function drawSuperCar(){
-  ctx.fillStyle="#ff3030";
+  // Bugatti-inspired top view
+  ctx.fillStyle="#1e63e9";
   ctx.beginPath();
-  ctx.moveTo(18,0);
-  ctx.lineTo(7,-11);
-  ctx.lineTo(-15,-9);
-  ctx.lineTo(-19,0);
-  ctx.lineTo(-15,9);
-  ctx.lineTo(7,11);
+  ctx.moveTo(0,-16);
+  ctx.bezierCurveTo(10,-16,15,-13,17,-7);
+  ctx.lineTo(18,0);
+  ctx.lineTo(17,7);
+  ctx.bezierCurveTo(15,13,10,16,0,16);
+  ctx.bezierCurveTo(-10,16,-15,13,-17,7);
+  ctx.lineTo(-18,0);
+  ctx.lineTo(-17,-7);
+  ctx.bezierCurveTo(-15,-13,-10,-16,0,-16);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle="#111";
-  roundRect(ctx,-3,-7,12,14,4);
+
+  ctx.fillStyle="#111827";
+  ctx.beginPath();
+  ctx.moveTo(0,-11);
+  ctx.bezierCurveTo(6,-11,9,-8,9,-2);
+  ctx.lineTo(9,7);
+  ctx.bezierCurveTo(9,10,5,12,0,12);
+  ctx.bezierCurveTo(-5,12,-9,10,-9,7);
+  ctx.lineTo(-9,-2);
+  ctx.bezierCurveTo(-9,-8,-6,-11,0,-11);
+  ctx.closePath();
   ctx.fill();
-  ctx.fillStyle="#fff";
-  ctx.fillRect(13,-5,4,3);
-  ctx.fillRect(13,2,4,3);
+
+  ctx.strokeStyle="rgba(255,255,255,.55)";
+  ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(0,-8);
+  ctx.lineTo(0,12);
+  ctx.stroke();
+
+  // Bugatti horseshoe grille
+  ctx.fillStyle="#171717";
+  ctx.beginPath();
+  ctx.moveTo(-5,-15);
+  ctx.quadraticCurveTo(0,-18,5,-15);
+  ctx.lineTo(5,-10);
+  ctx.quadraticCurveTo(0,-7,-5,-10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle="#b9d4ff";
+  ctx.lineWidth=1;
+  ctx.stroke();
+
+  ctx.fillStyle="#dcecff";
+  ctx.fillRect(-13,-10,4,2.5);
+  ctx.fillRect(9,-10,4,2.5);
+  ctx.fillStyle="#ff4d4d";
+  ctx.fillRect(-11,13,3,1.8);
+  ctx.fillRect(8,13,3,1.8);
 }
 
 function drawTruck(){
-  ctx.fillStyle="#d8d8d8";
-  roundRect(ctx,-18,-11,25,22,4);
+  // Cybertruck-inspired top view
+  ctx.fillStyle="#b7bcc2";
+  ctx.beginPath();
+  ctx.moveTo(0,-16);
+  ctx.lineTo(14,-10);
+  ctx.lineTo(18,0);
+  ctx.lineTo(14,12);
+  ctx.lineTo(-8,16);
+  ctx.lineTo(-17,8);
+  ctx.lineTo(-19,-2);
+  ctx.lineTo(-11,-13);
+  ctx.closePath();
   ctx.fill();
-  ctx.fillStyle="#b7b7b7";
-  roundRect(ctx,5,-10,15,20,3);
+
+  ctx.fillStyle="#6d737a";
+  ctx.beginPath();
+  ctx.moveTo(-4,-9);
+  ctx.lineTo(8,-6);
+  ctx.lineTo(11,1);
+  ctx.lineTo(8,8);
+  ctx.lineTo(-6,10);
+  ctx.lineTo(-11,5);
+  ctx.lineTo(-12,-2);
+  ctx.lineTo(-8,-8);
+  ctx.closePath();
   ctx.fill();
-  ctx.fillStyle="#c00001";
-  roundRect(ctx,7,-7,8,14,3);
-  ctx.fill();
-  drawWheels();
+
+  ctx.strokeStyle="rgba(255,255,255,.55)";
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(-8,-12);
+  ctx.lineTo(13,-4);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-13,12);
+  ctx.lineTo(12,8);
+  ctx.stroke();
+
+  ctx.fillStyle="#e9edf2";
+  ctx.fillRect(11,-1,6,2);
+  ctx.fillStyle="#ff4d4d";
+  ctx.fillRect(-17,-1,5,2);
+
+  ctx.fillStyle="#151515";
+  ctx.fillRect(-15,-14,6,4);
+  ctx.fillRect(-16,10,6,4);
+  ctx.fillRect(9,-9,6,4);
+  ctx.fillRect(10,7,6,4);
 }
 
 function drawBike(){
@@ -530,7 +602,6 @@ function drawParticles(){
 function updateTexts(){
   scoreText.textContent=score.toLocaleString();
   bestText.textContent=best.toLocaleString();
-  stageText.textContent=stages[stage].label;
 }
 
 function refreshVehicleButtons(){
