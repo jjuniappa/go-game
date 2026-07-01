@@ -1,13 +1,13 @@
 {
-  "name": "전략 바둑 AI",
-  "short_name": "전략바둑",
-  "description": "실전 바둑 전략을 휴리스틱으로 반영한 모바일 바둑 AI",
+  "name": "Beat Tap",
+  "short_name": "BeatTap",
+  "description": "내장 음악으로 플레이하는 모바일 리듬게임",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#111111",
-  "theme_color": "#d9a441",
+  "background_color": "#080808",
+  "theme_color": "#111111",
   "icons": [
     {
       "src": "./icons/icon-192.png",

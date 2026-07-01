@@ -1,34 +1,28 @@
-전략 바둑 AI 버전
+Beat Tap - 내장 음악 리듬게임
 
-핵심:
-- 줄 교차점 터치 방식 유지
-- 10x10 모바일 최적화
-- 사람 vs 사람 / 사람 vs AI
-- AI 난이도: 초급 / 전략형 / 수읽기형
-- AI 전략 로그 표시
+구성:
+- index.html
+- manifest.json
+- service-worker.js
+- assets/beat_loop.wav : 자체 생성한 저작권 없는 내장 음악
+- icons/icon-192.png
+- icons/icon-512.png
 
-AI 판단 요소:
-1. 단수 잡기
-2. 단수 탈출
-3. 끊기
-4. 연결
-5. 약한 돌 공격
-6. 내 약한 돌 보강
-7. 활로 확보
-8. 중앙/변/귀 포석 가치
-9. 집 가능성
-10. 상대 집 침투
-11. 상대의 다음 따냄 위험 회피
-12. 1수 앞 수읽기
-13. 형세 점수 기반 착수 선택
+특징:
+- 휴대폰에 MP3가 없어도 음악 재생 가능
+- Easy / Normal / Hard 난이도
+- 4라인 터치 리듬게임
+- PERFECT / GOOD / MISS 판정
+- 점수 / 콤보 / 결과 화면
+- PWA 설치 가능
 
-GitHub 업로드:
+GitHub Pages 업로드:
 1. ZIP 압축을 풉니다.
-2. 기존 저장소에서 Add file > Upload files를 누릅니다.
-3. index.html, manifest.json, service-worker.js, icons 폴더, README_설치방법.txt를 업로드합니다.
+2. GitHub 저장소에서 Add file > Upload files를 누릅니다.
+3. index.html, manifest.json, service-worker.js, assets 폴더, icons 폴더, README_설치방법.txt를 업로드합니다.
 4. Commit changes를 누릅니다.
-5. GitHub Pages 주소를 새로고침합니다.
+5. Settings > Pages에서 main / root 배포가 켜져 있으면 주소로 실행됩니다.
 
-캐시 문제:
-- 이전 버전이 보이면 홈 화면 앱을 완전히 종료 후 다시 실행하세요.
-- 브라우저 새로고침 또는 캐시 삭제가 필요할 수 있습니다.
+주의:
+- 모바일 브라우저 정책상 음악은 반드시 사용자가 '게임 시작' 버튼을 눌러야 재생됩니다.
+- 이전 버전이 보이면 홈 화면 앱 종료 후 재실행하거나 브라우저 캐시를 삭제하세요.
