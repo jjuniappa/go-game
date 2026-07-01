@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#d9a441" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="모바일 바둑" />
+  <meta name="apple-mobile-web-app-title" content="전략 바둑" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
 
-  <title>모바일 바둑 - 교차점 터치</title>
+  <title>전략 바둑 AI</title>
 
   <style>
     :root {
@@ -57,9 +57,7 @@
       align-items: center;
     }
 
-    .title {
-      min-width: 0;
-    }
+    .title { min-width: 0; }
 
     .title h1 {
       margin: 0;
@@ -77,7 +75,6 @@
     }
 
     .turn-badge {
-      flex: 0 0 auto;
       display: inline-flex;
       align-items: center;
       gap: 7px;
@@ -141,9 +138,7 @@
       gap: 8px;
     }
 
-    .ai-options.show {
-      display: grid;
-    }
+    .ai-options.show { display: grid; }
 
     select {
       width: 100%;
@@ -226,9 +221,7 @@
       display: none;
     }
 
-    .touch-preview.show {
-      display: block;
-    }
+    .touch-preview.show { display: block; }
 
     .stone {
       position: absolute;
@@ -275,9 +268,7 @@
       pointer-events: none;
     }
 
-    .thinking.show {
-      display: flex;
-    }
+    .thinking.show { display: flex; }
 
     .thinking-box {
       padding: 12px 16px;
@@ -309,6 +300,16 @@
       font-size: 13px;
     }
 
+    .strategy-log {
+      min-height: 20px;
+      font-size: 12px;
+      color: #ddd;
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .buttons {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -332,14 +333,12 @@
       background: #3b3b3b;
     }
 
-    button.primary {
-      background: var(--accent);
-    }
+    button.primary { background: var(--accent); }
 
     .toast {
       position: fixed;
       left: 50%;
-      bottom: calc(82px + env(safe-area-inset-bottom));
+      bottom: calc(94px + env(safe-area-inset-bottom));
       transform: translateX(-50%);
       max-width: calc(100vw - 32px);
       padding: 10px 13px;
@@ -356,9 +355,7 @@
       text-overflow: ellipsis;
     }
 
-    .toast.show {
-      opacity: 1;
-    }
+    .toast.show { opacity: 1; }
 
     @media (min-width: 900px) {
       body {
@@ -368,21 +365,15 @@
         border-right: 1px solid rgba(255,255,255,0.08);
       }
 
-      .board-area {
-        padding: 18px;
-      }
+      .board-area { padding: 18px; }
 
       .topbar,
       .mode-panel,
-      .bottom-panel {
-        padding-inline: 22px;
-      }
+      .bottom-panel { padding-inline: 22px; }
     }
 
-    @media (max-height: 740px) {
-      .title p {
-        display: none;
-      }
+    @media (max-height: 760px) {
+      .title p { display: none; }
 
       .topbar {
         padding-top: 10px;
@@ -394,13 +385,9 @@
         padding-bottom: 7px;
       }
 
-      .bottom-panel {
-        padding-top: 8px;
-      }
+      .bottom-panel { padding-top: 8px; }
 
-      .board {
-        width: min(97vw, 69dvh, 720px);
-      }
+      .board { width: min(97vw, 67dvh, 720px); }
 
       button,
       .mode-btn,
@@ -414,8 +401,8 @@
 <body>
   <header class="topbar">
     <div class="title">
-      <h1>모바일 바둑 10×10</h1>
-      <p>교차점 기준 터치 방식</p>
+      <h1>전략 바둑 10×10</h1>
+      <p>교차점 터치 · 전략형 AI</p>
     </div>
 
     <div class="turn-badge">
@@ -438,8 +425,8 @@
 
       <select id="aiLevelSelect" aria-label="AI 난이도">
         <option value="easy">AI 초급</option>
-        <option value="normal" selected>AI 보통</option>
-        <option value="hard">AI 강함</option>
+        <option value="normal" selected>AI 전략형</option>
+        <option value="hard">AI 수읽기형</option>
       </select>
     </div>
   </section>
@@ -456,6 +443,8 @@
       <span>잡은 돌 <strong>흑 <span id="blackCaptures">0</span> · 백 <span id="whiteCaptures">0</span></strong></span>
     </div>
 
+    <div id="strategyLog" class="strategy-log">AI 전략 로그가 여기에 표시됩니다.</div>
+
     <div class="buttons">
       <button id="passBtn" class="primary">패스</button>
       <button id="undoBtn">무르기</button>
@@ -465,7 +454,7 @@
   </section>
 
   <div id="thinking" class="thinking">
-    <div class="thinking-box">AI 생각 중...</div>
+    <div class="thinking-box">AI 수읽기 중...</div>
   </div>
 
   <div id="toast" class="toast"></div>
@@ -478,9 +467,9 @@
     const HUMAN_MODE = "human";
     const AI_MODE = "ai";
 
-    // 선 시작/끝 위치와 반드시 동일해야 함.
     const BOARD_MARGIN_PERCENT = 8;
     const BOARD_SPAN_PERCENT = 84;
+    const KOMI = 6.5;
 
     const boardEl = document.getElementById("board");
     const touchPreviewEl = document.getElementById("touchPreview");
@@ -496,6 +485,7 @@
     const aiOptionsEl = document.getElementById("aiOptions");
     const playerColorSelect = document.getElementById("playerColorSelect");
     const aiLevelSelect = document.getElementById("aiLevelSelect");
+    const strategyLogEl = document.getElementById("strategyLog");
 
     let board = createBoard();
     let turn = BLACK;
@@ -511,6 +501,7 @@
     let aiColor = WHITE;
     let aiLevel = "normal";
     let aiBusy = false;
+    let lastAiReason = "AI 전략 로그가 여기에 표시됩니다.";
 
     function createBoard() {
       return Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
@@ -562,10 +553,8 @@
       const span = rect.width * (BOARD_SPAN_PERCENT / 100);
       const cell = span / (SIZE - 1);
 
-      const rawC = (x - margin) / cell;
-      const rawR = (y - margin) / cell;
-      const c = Math.round(rawC);
-      const r = Math.round(rawR);
+      const c = Math.round((x - margin) / cell);
+      const r = Math.round((y - margin) / cell);
 
       if (!inBounds(r, c)) return null;
 
@@ -573,9 +562,7 @@
       const iy = margin + r * cell;
       const distance = Math.hypot(x - ix, y - iy);
 
-      // 교차점에서 너무 멀리 떨어진 터치는 무시.
-      // 손가락 터치를 고려해 한 칸의 48% 이내만 인정.
-      if (distance > cell * 0.48) return null;
+      if (distance > cell * 0.52) return null;
 
       return { r, c, xPercent: posToPercent(c), yPercent: posToPercent(r) };
     }
@@ -645,6 +632,7 @@
       modeAiBtn.classList.toggle("active", mode === AI_MODE);
       aiOptionsEl.classList.toggle("show", mode === AI_MODE);
 
+      strategyLogEl.textContent = lastAiReason;
       saveState();
     }
 
@@ -658,6 +646,14 @@
 
     function diagonalNeighbors(r, c) {
       return [[r-1,c-1], [r-1,c+1], [r+1,c-1], [r+1,c+1]].filter(([nr, nc]) => inBounds(nr, nc));
+    }
+
+    function cloneBoard(source) {
+      return source.map(row => [...row]);
+    }
+
+    function boardHash(targetBoard = board) {
+      return targetBoard.map(row => row.join("")).join("|");
     }
 
     function getGroupFromBoard(r, c, targetBoard) {
@@ -686,12 +682,23 @@
       return { stones, liberties };
     }
 
-    function cloneBoard(source) {
-      return source.map(row => [...row]);
-    }
+    function getAllGroups(targetBoard, color) {
+      const visited = new Set();
+      const groups = [];
 
-    function boardHash(targetBoard = board) {
-      return targetBoard.map(row => row.join("")).join("|");
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (targetBoard[r][c] !== color) continue;
+          const key = `${r},${c}`;
+          if (visited.has(key)) continue;
+
+          const group = getGroupFromBoard(r, c, targetBoard);
+          group.stones.forEach(([gr, gc]) => visited.add(`${gr},${gc}`));
+          groups.push(group);
+        }
+      }
+
+      return groups;
     }
 
     function saveHistory() {
@@ -705,7 +712,8 @@
         mode,
         playerColor,
         aiColor,
-        aiLevel
+        aiLevel,
+        lastAiReason
       });
 
       if (history.length > 120) history.shift();
@@ -735,7 +743,6 @@
       lastMove = { r, c };
       moveCount++;
       previousHash = beforeHash;
-
       turn = opponent(turn);
 
       if (result.captured > 0) {
@@ -779,6 +786,7 @@
       }
 
       const myGroup = getGroupFromBoard(r, c, testBoard);
+
       if (myGroup.liberties.size === 0) {
         return { ok: false, reason: "자살수는 둘 수 없습니다." };
       }
@@ -811,9 +819,10 @@
           return;
         }
 
+        lastAiReason = `AI: ${move.reason}`;
         playMove(move.r, move.c, { byAI: true });
         aiBusy = false;
-      }, 450);
+      }, aiLevel === "hard" ? 700 : 420);
     }
 
     function chooseAIMove() {
@@ -826,8 +835,18 @@
           const result = simulateMove(board, aiColor, r, c, previousHash);
           if (!result.ok) continue;
 
-          const score = evaluateAIMove(r, c, result);
-          candidates.push({ r, c, score });
+          const evaluation = evaluateStrategicMove(r, c, result);
+
+          if (aiLevel === "hard") {
+            evaluation.score += onePlyLookahead(result.board, opponent(aiColor)) * 0.7;
+          }
+
+          candidates.push({
+            r,
+            c,
+            score: evaluation.score,
+            reason: evaluation.reason
+          });
         }
       }
 
@@ -836,86 +855,314 @@
       candidates.sort((a, b) => b.score - a.score);
 
       if (aiLevel === "easy") {
-        const topRange = candidates.slice(0, Math.min(candidates.length, 20));
+        const topRange = candidates.slice(0, Math.min(candidates.length, 16));
         return topRange[Math.floor(Math.random() * topRange.length)];
       }
 
       if (aiLevel === "normal") {
-        const topRange = candidates.slice(0, Math.min(candidates.length, 6));
+        const topRange = candidates.slice(0, Math.min(candidates.length, 4));
         return topRange[Math.floor(Math.random() * topRange.length)];
       }
 
       return candidates[0];
     }
 
-    function evaluateAIMove(r, c, result) {
-      let score = 0;
+    function evaluateStrategicMove(r, c, result) {
       const enemy = opponent(aiColor);
+      let score = 0;
+      const reasons = [];
 
-      score += result.captured * 1000;
-      score += result.liberties * 45;
-      score += Math.min(result.groupSize, 5) * 18;
+      const beforeShape = evaluateBoardShape(board, aiColor);
+      const afterShape = evaluateBoardShape(result.board, aiColor);
+      const beforeEnemyShape = evaluateBoardShape(board, enemy);
+      const afterEnemyShape = evaluateBoardShape(result.board, enemy);
 
-      if (result.liberties === 1) score -= 180;
-      if (result.liberties === 2) score -= 25;
+      const shapeGain = afterShape.total - beforeShape.total;
+      const enemyLoss = beforeEnemyShape.total - afterEnemyShape.total;
 
-      for (const [nr, nc] of neighbors(r, c)) {
-        if (board[nr][nc] === aiColor) {
-          const g = getGroupFromBoard(nr, nc, board);
-          if (g.liberties.size === 1) score += 520;
-          if (g.liberties.size === 2) score += 130;
-          score += 55;
-        }
+      score += shapeGain * 1.2;
+      score += enemyLoss * 0.8;
 
-        if (board[nr][nc] === enemy) {
-          const g = getGroupFromBoard(nr, nc, board);
-          if (g.liberties.size === 1) score += 700;
-          if (g.liberties.size === 2) score += 210;
-          if (g.liberties.size === 3) score += 60;
+      if (result.captured > 0) {
+        const captureScore = result.captured * 1400;
+        score += captureScore;
+        reasons.push(`${result.captured}점 따냄`);
+      }
+
+      if (result.liberties <= 1) {
+        score -= 450;
+        reasons.push("자충 위험");
+      } else if (result.liberties === 2) {
+        score -= 70;
+      } else {
+        score += result.liberties * 60;
+      }
+
+      const myAtariBefore = countGroupsByLiberties(board, aiColor, 1);
+      const myAtariAfter = countGroupsByLiberties(result.board, aiColor, 1);
+      const savedGroups = myAtariBefore - myAtariAfter;
+      if (savedGroups > 0) {
+        score += savedGroups * 850;
+        reasons.push("단수 탈출");
+      }
+
+      const enemyAtariBefore = countGroupsByLiberties(board, enemy, 1);
+      const enemyAtariAfter = countGroupsByLiberties(result.board, enemy, 1);
+      const attackedGroups = enemyAtariAfter - enemyAtariBefore;
+      if (attackedGroups > 0) {
+        score += attackedGroups * 520;
+        reasons.push("상대 단수");
+      }
+
+      const connected = countAdjacentStones(r, c, aiColor);
+      if (connected > 0) {
+        score += connected * 140;
+        reasons.push("연결");
+      }
+
+      const cutValue = estimateCutValue(r, c, enemy);
+      if (cutValue > 0) {
+        score += cutValue * 190;
+        reasons.push("끊기");
+      }
+
+      const influence = influenceValue(r, c, aiColor);
+      score += influence;
+
+      const territory = territoryPotential(r, c, aiColor);
+      score += territory;
+
+      const invade = invasionValue(r, c, enemy);
+      if (invade > 0) {
+        score += invade;
+        reasons.push("침투");
+      }
+
+      const counterCapture = estimateBestCapture(result.board, enemy);
+      if (counterCapture > 0) {
+        score -= counterCapture * 900;
+        reasons.push("반격 위험 회피");
+      }
+
+      const weakAttack = attackWeakGroups(r, c, enemy);
+      if (weakAttack > 0) {
+        score += weakAttack;
+        reasons.push("약한 돌 공격");
+      }
+
+      const weakDefend = defendWeakGroups(r, c, aiColor);
+      if (weakDefend > 0) {
+        score += weakDefend;
+        reasons.push("약한 돌 보강");
+      }
+
+      const endgame = endgameTerritoryGain(result.board, aiColor) - endgameTerritoryGain(board, aiColor);
+      if (moveCount > 50 && endgame > 0) {
+        score += endgame * 90;
+        reasons.push("끝내기");
+      }
+
+      score += Math.random() * (aiLevel === "hard" ? 3 : 22);
+
+      const reason = reasons.length ? reasons.slice(0, 3).join(" · ") : "형세/활로 우선";
+      return { score, reason };
+    }
+
+    function evaluateBoardShape(targetBoard, color) {
+      const enemy = opponent(color);
+      const groups = getAllGroups(targetBoard, color);
+      const enemyGroups = getAllGroups(targetBoard, enemy);
+
+      let stones = 0;
+      let liberties = 0;
+      let atariPenalty = 0;
+      let connection = 0;
+      let influence = 0;
+      let territory = estimateTerritory(targetBoard, color);
+      let weakEnemyBonus = 0;
+
+      for (const group of groups) {
+        stones += group.stones.length;
+        liberties += Math.min(group.liberties.size, 8) * 16;
+
+        if (group.liberties.size === 1) atariPenalty -= 520;
+        if (group.liberties.size === 2) atariPenalty -= 90;
+
+        for (const [r, c] of group.stones) {
+          connection += countAdjacentOnBoard(targetBoard, r, c, color) * 10;
+          influence += boardInfluencePoint(r, c);
         }
       }
 
-      const counterLoss = estimateBestCapture(result.board, enemy);
-      score -= counterLoss * 620;
+      for (const group of enemyGroups) {
+        if (group.liberties.size === 1) weakEnemyBonus += 280;
+        if (group.liberties.size === 2) weakEnemyBonus += 80;
+      }
 
-      const dangerBefore = countGroupsInAtari(board, aiColor);
-      const dangerAfter = countGroupsInAtari(result.board, aiColor);
-      score += (dangerBefore - dangerAfter) * 280;
+      const total =
+        stones * 45 +
+        liberties +
+        atariPenalty +
+        connection +
+        influence +
+        territory * 65 +
+        weakEnemyBonus;
 
-      const enemyAtariBefore = countGroupsInAtari(board, enemy);
-      const enemyAtariAfter = countGroupsInAtari(result.board, enemy);
-      score += (enemyAtariAfter - enemyAtariBefore) * 180;
+      return { total, stones, liberties, territory };
+    }
+
+    function onePlyLookahead(afterBoard, enemyColor) {
+      let worstForAI = 0;
+      let enemyBest = -Infinity;
+
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (afterBoard[r][c] !== EMPTY) continue;
+          const reply = simulateMove(afterBoard, enemyColor, r, c, null);
+          if (!reply.ok) continue;
+
+          const enemyGain = evaluateBoardShape(reply.board, enemyColor).total - evaluateBoardShape(afterBoard, enemyColor).total;
+          const aiLoss = evaluateBoardShape(afterBoard, aiColor).total - evaluateBoardShape(reply.board, aiColor).total;
+          const value = enemyGain + aiLoss + reply.captured * 1200;
+
+          if (value > enemyBest) {
+            enemyBest = value;
+            worstForAI = value;
+          }
+        }
+      }
+
+      if (!Number.isFinite(enemyBest)) return 0;
+      return -worstForAI;
+    }
+
+    function countGroupsByLiberties(targetBoard, color, libertiesCount) {
+      return getAllGroups(targetBoard, color).filter(g => g.liberties.size === libertiesCount).length;
+    }
+
+    function countAdjacentStones(r, c, color) {
+      return neighbors(r, c).filter(([nr, nc]) => board[nr][nc] === color).length;
+    }
+
+    function countAdjacentOnBoard(targetBoard, r, c, color) {
+      return neighbors(r, c).filter(([nr, nc]) => targetBoard[nr][nc] === color).length;
+    }
+
+    function estimateCutValue(r, c, enemy) {
+      const adjacentEnemyGroups = new Set();
+
+      for (const [nr, nc] of neighbors(r, c)) {
+        if (board[nr][nc] !== enemy) continue;
+        const group = getGroupFromBoard(nr, nc, board);
+        const id = group.stones.map(([gr, gc]) => `${gr},${gc}`).sort().join("|");
+        adjacentEnemyGroups.add(id);
+      }
+
+      return Math.max(0, adjacentEnemyGroups.size - 1);
+    }
+
+    function influenceValue(r, c, color) {
+      let score = 0;
 
       const center = (SIZE - 1) / 2;
       const distCenter = Math.abs(r - center) + Math.abs(c - center);
-      score += Math.max(0, 28 - distCenter * 5);
+      score += Math.max(0, 40 - distCenter * 6);
 
       const edgeDistance = Math.min(r, c, SIZE - 1 - r, SIZE - 1 - c);
-      if (edgeDistance === 0) score -= moveCount < 45 ? 55 : 10;
-      if (edgeDistance === 1) score += moveCount < 45 ? 12 : 4;
-      if (edgeDistance === 2) score += 28;
+      if (moveCount < 35) {
+        if (edgeDistance === 0) score -= 70;
+        if (edgeDistance === 1) score += 25;
+        if (edgeDistance === 2) score += 55;
+        if (edgeDistance === 3) score += 35;
+      } else {
+        if (edgeDistance === 0) score += 15;
+        if (edgeDistance === 1) score += 10;
+      }
 
       const starPoints = [[2,2], [2,7], [7,2], [7,7], [5,5]];
       let nearestStar = 99;
       for (const [sr, sc] of starPoints) {
         nearestStar = Math.min(nearestStar, Math.abs(r - sr) + Math.abs(c - sc));
       }
-      score += Math.max(0, 32 - nearestStar * 9);
+      score += Math.max(0, 48 - nearestStar * 12);
 
       for (const [nr, nc] of diagonalNeighbors(r, c)) {
-        if (board[nr][nc] === aiColor) score += 18;
-        if (board[nr][nc] === enemy) score += 6;
+        if (board[nr][nc] === color) score += 26;
       }
 
-      if (moveCount < 30) {
-        const friendlyNear = countNearbyStones(r, c, aiColor, 2);
-        const enemyNear = countNearbyStones(r, c, enemy, 2);
-        score += friendlyNear * 24;
-        score += enemyNear * 8;
-      }
-
-      score += Math.random() * (aiLevel === "hard" ? 2 : 18);
       return score;
+    }
+
+    function boardInfluencePoint(r, c) {
+      const center = (SIZE - 1) / 2;
+      const distCenter = Math.abs(r - center) + Math.abs(c - center);
+      const edgeDistance = Math.min(r, c, SIZE - 1 - r, SIZE - 1 - c);
+      return Math.max(0, 16 - distCenter * 2) + edgeDistance * 2;
+    }
+
+    function territoryPotential(r, c, color) {
+      let score = 0;
+      const enemy = opponent(color);
+
+      for (let nr = Math.max(0, r - 2); nr <= Math.min(SIZE - 1, r + 2); nr++) {
+        for (let nc = Math.max(0, c - 2); nc <= Math.min(SIZE - 1, c + 2); nc++) {
+          if (board[nr][nc] === color) score += 18;
+          if (board[nr][nc] === enemy) score -= 8;
+        }
+      }
+
+      return score;
+    }
+
+    function invasionValue(r, c, enemy) {
+      let enemyNear = 0;
+      let emptyNear = 0;
+
+      for (let nr = Math.max(0, r - 2); nr <= Math.min(SIZE - 1, r + 2); nr++) {
+        for (let nc = Math.max(0, c - 2); nc <= Math.min(SIZE - 1, c + 2); nc++) {
+          if (board[nr][nc] === enemy) enemyNear++;
+          if (board[nr][nc] === EMPTY) emptyNear++;
+        }
+      }
+
+      if (enemyNear >= 4 && emptyNear >= 5) return 130;
+      return 0;
+    }
+
+    function attackWeakGroups(r, c, enemy) {
+      let score = 0;
+
+      for (const group of getAllGroups(board, enemy)) {
+        const minDistance = minDistanceToGroup(r, c, group);
+        if (minDistance <= 2) {
+          if (group.liberties.size === 2) score += 230;
+          if (group.liberties.size === 3) score += 90;
+        }
+      }
+
+      return score;
+    }
+
+    function defendWeakGroups(r, c, color) {
+      let score = 0;
+
+      for (const group of getAllGroups(board, color)) {
+        const minDistance = minDistanceToGroup(r, c, group);
+        if (minDistance <= 2) {
+          if (group.liberties.size === 1) score += 680;
+          if (group.liberties.size === 2) score += 210;
+        }
+      }
+
+      return score;
+    }
+
+    function minDistanceToGroup(r, c, group) {
+      let min = 99;
+      for (const [gr, gc] of group.stones) {
+        min = Math.min(min, Math.abs(r - gr) + Math.abs(c - gc));
+      }
+      return min;
     }
 
     function estimateBestCapture(targetBoard, color) {
@@ -932,37 +1179,50 @@
       return best;
     }
 
-    function countGroupsInAtari(targetBoard, color) {
+    function estimateTerritory(targetBoard, color) {
+      const enemy = opponent(color);
+      let territory = 0;
       const visited = new Set();
-      let count = 0;
 
       for (let r = 0; r < SIZE; r++) {
         for (let c = 0; c < SIZE; c++) {
-          if (targetBoard[r][c] !== color) continue;
-          const key = `${r},${c}`;
-          if (visited.has(key)) continue;
+          if (targetBoard[r][c] !== EMPTY || visited.has(`${r},${c}`)) continue;
 
-          const g = getGroupFromBoard(r, c, targetBoard);
-          g.stones.forEach(([gr, gc]) => visited.add(`${gr},${gc}`));
+          const region = [];
+          const borders = new Set();
+          const stack = [[r, c]];
 
-          if (g.liberties.size === 1) count++;
+          while (stack.length) {
+            const [cr, cc] = stack.pop();
+            const key = `${cr},${cc}`;
+            if (visited.has(key)) continue;
+            visited.add(key);
+            region.push([cr, cc]);
+
+            for (const [nr, nc] of neighbors(cr, cc)) {
+              if (targetBoard[nr][nc] === EMPTY) {
+                stack.push([nr, nc]);
+              } else {
+                borders.add(targetBoard[nr][nc]);
+              }
+            }
+          }
+
+          if (borders.size === 1 && borders.has(color)) {
+            territory += region.length;
+          }
+
+          if (borders.has(color) && !borders.has(enemy)) {
+            territory += region.length * 0.45;
+          }
         }
       }
 
-      return count;
+      return territory;
     }
 
-    function countNearbyStones(r, c, color, radius) {
-      let count = 0;
-
-      for (let nr = Math.max(0, r - radius); nr <= Math.min(SIZE - 1, r + radius); nr++) {
-        for (let nc = Math.max(0, c - radius); nc <= Math.min(SIZE - 1, c + radius); nc++) {
-          if (nr === r && nc === c) continue;
-          if (board[nr][nc] === color) count++;
-        }
-      }
-
-      return count;
+    function endgameTerritoryGain(targetBoard, color) {
+      return estimateTerritory(targetBoard, color);
     }
 
     function passTurn(options = {}) {
@@ -1006,6 +1266,7 @@
         playerColor = prev.playerColor || playerColor;
         aiColor = prev.aiColor || aiColor;
         aiLevel = prev.aiLevel || aiLevel;
+        lastAiReason = prev.lastAiReason || lastAiReason;
       }
 
       playerColorSelect.value = String(playerColor);
@@ -1026,7 +1287,8 @@
       history = [];
       aiBusy = false;
       thinkingEl.classList.remove("show");
-      localStorage.removeItem("mobile-go-state-intersection-v1");
+      lastAiReason = "AI 전략 로그가 여기에 표시됩니다.";
+      localStorage.removeItem("mobile-go-strategy-ai-v1");
       showToast("새 판을 시작합니다.");
       renderStones();
 
@@ -1036,9 +1298,9 @@
     }
 
     function simpleScore() {
-      const visited = new Set();
-      let blackTerritory = 0;
-      let whiteTerritory = 0;
+      const blackTerritory = estimateTerritory(board, BLACK);
+      const whiteTerritory = estimateTerritory(board, WHITE);
+
       let blackStones = 0;
       let whiteStones = 0;
 
@@ -1049,41 +1311,10 @@
         }
       }
 
-      for (let r = 0; r < SIZE; r++) {
-        for (let c = 0; c < SIZE; c++) {
-          if (board[r][c] !== EMPTY || visited.has(`${r},${c}`)) continue;
-
-          const region = [];
-          const borders = new Set();
-          const stack = [[r, c]];
-
-          while (stack.length) {
-            const [cr, cc] = stack.pop();
-            const key = `${cr},${cc}`;
-            if (visited.has(key)) continue;
-            visited.add(key);
-            region.push([cr, cc]);
-
-            for (const [nr, nc] of neighbors(cr, cc)) {
-              if (board[nr][nc] === EMPTY) {
-                stack.push([nr, nc]);
-              } else {
-                borders.add(board[nr][nc]);
-              }
-            }
-          }
-
-          if (borders.size === 1) {
-            if (borders.has(BLACK)) blackTerritory += region.length;
-            if (borders.has(WHITE)) whiteTerritory += region.length;
-          }
-        }
-      }
-
       const blackScore = blackStones + blackTerritory + captures[BLACK];
-      const whiteScore = whiteStones + whiteTerritory + captures[WHITE] + 6.5;
+      const whiteScore = whiteStones + whiteTerritory + captures[WHITE] + KOMI;
 
-      alert(`간이 계가\n\n흑: ${blackScore}\n백: ${whiteScore}\n\n※ 정확한 사석 판정 전 단계의 간이 계산입니다.`);
+      alert(`간이 계가\n\n흑: ${blackScore.toFixed(1)}\n백: ${whiteScore.toFixed(1)}\n\n※ 사석 수동 지정이 없는 간이 계산입니다.`);
     }
 
     function setMode(nextMode) {
@@ -1128,13 +1359,14 @@
         mode,
         playerColor,
         aiColor,
-        aiLevel
+        aiLevel,
+        lastAiReason
       };
-      localStorage.setItem("mobile-go-state-intersection-v1", JSON.stringify(state));
+      localStorage.setItem("mobile-go-strategy-ai-v1", JSON.stringify(state));
     }
 
     function loadState() {
-      const raw = localStorage.getItem("mobile-go-state-intersection-v1");
+      const raw = localStorage.getItem("mobile-go-strategy-ai-v1");
       if (!raw) return false;
 
       try {
@@ -1152,6 +1384,7 @@
         playerColor = state.playerColor || BLACK;
         aiColor = state.aiColor || WHITE;
         aiLevel = state.aiLevel || "normal";
+        lastAiReason = state.lastAiReason || lastAiReason;
 
         playerColorSelect.value = String(playerColor);
         aiLevelSelect.value = aiLevel;
@@ -1174,7 +1407,6 @@
     modeAiBtn.addEventListener("click", () => setMode(AI_MODE));
     playerColorSelect.addEventListener("change", changeAIOption);
     aiLevelSelect.addEventListener("change", changeAIOption);
-
     boardEl.addEventListener("pointerdown", handleBoardPointer);
 
     document.getElementById("passBtn").addEventListener("click", () => {
@@ -1209,6 +1441,7 @@
       playerColor = BLACK;
       aiColor = WHITE;
       aiLevel = "normal";
+      lastAiReason = "AI 전략 로그가 여기에 표시됩니다.";
     }
 
     renderStones();

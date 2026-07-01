@@ -1,4 +1,4 @@
-const CACHE_NAME = "mobile-go-intersection-touch-v1";
+const CACHE_NAME = "mobile-go-strategy-ai-v1";
 const ASSETS = [
   "./",
   "./index.html",

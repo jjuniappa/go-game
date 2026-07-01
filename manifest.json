@@ -1,7 +1,7 @@
 {
-  "name": "모바일 바둑 교차점",
-  "short_name": "바둑",
-  "description": "줄과 줄의 교차점에 착수하는 모바일 바둑 게임",
+  "name": "전략 바둑 AI",
+  "short_name": "전략바둑",
+  "description": "실전 바둑 전략을 휴리스틱으로 반영한 모바일 바둑 AI",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
