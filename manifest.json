@@ -1,7 +1,7 @@
 {
   "name": "Tap Drift",
   "short_name": "TapDrift",
-  "description": "PERFECT/GOOD 점수와 스페이스바 조작을 추가한 Tap Drift",
+  "description": "스페이스바 드리프트를 확실히 고친 Tap Drift",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

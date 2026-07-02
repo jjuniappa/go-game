@@ -44,7 +44,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 @media (min-width:900px){body{max-width:520px;margin:0 auto;border-left:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.08)}}
 </style>
 </head>
-<body>
+<body tabindex="0">
 <header class="topbar">
   <div class="title">
     <h1>Tap Drift</h1>
@@ -194,6 +194,7 @@ function resetGame(){
 
 function startGame(){
   resetGame();
+  document.body.focus();
   startOverlay.classList.add("hidden");
   resultOverlay.classList.add("hidden");
   running=true;
@@ -457,16 +458,34 @@ function updateTexts(){
   stageText.textContent=stages[stage].label;
 }
 
-tapZone.addEventListener("pointerdown",e=>{e.preventDefault();tap()});
+tapZone.addEventListener("pointerdown",e=>{e.preventDefault();document.body.focus();tap()});
+window.addEventListener("pointerdown",()=>document.body.focus());
 startBtn.addEventListener("click",startGame);
 retryBtn.addEventListener("click",startGame);
 homeBtn.addEventListener("click",()=>{resultOverlay.classList.add("hidden");startOverlay.classList.remove("hidden")});
-document.addEventListener("keydown",e=>{
-  if(e.code==="Space"){
-    e.preventDefault();
+let spacePressed=false;
+
+function handleDriftKey(e){
+  const isSpace=e.code==="Space"||e.key===" "||e.key==="Spacebar";
+  if(!isSpace)return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  if(e.type==="keydown"){
+    if(spacePressed)return;
+    spacePressed=true;
     tap();
   }
-});
+
+  if(e.type==="keyup"){
+    spacePressed=false;
+  }
+}
+
+window.addEventListener("keydown",handleDriftKey,{capture:true});
+window.addEventListener("keyup",handleDriftKey,{capture:true});
+document.addEventListener("keydown",handleDriftKey,{capture:true});
+document.addEventListener("keyup",handleDriftKey,{capture:true});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&running)crash()});
 if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("./service-worker.js").catch(()=>{})})}
 resetGame();
