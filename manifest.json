@@ -1,7 +1,7 @@
 {
   "name": "Tap Drift",
   "short_name": "TapDrift",
-  "description": "코너 타이밍 판정을 수정한 Tap Drift",
+  "description": "코너 판정 수정 버전에 BGM과 효과음을 추가한 Tap Drift",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
