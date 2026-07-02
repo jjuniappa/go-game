@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#070707" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Tap Drift" />
+<link rel="manifest" href="./manifest.json" />
+<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+<title>Tap Drift</title>
+<style>
+:root{--bg:#070707;--text:#f7f7f7;--muted:#aaa;--accent:#c00001}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overscroll-behavior:none}
+body{min-height:100dvh;display:flex;flex-direction:column}
+.topbar{padding:max(12px,env(safe-area-inset-top)) 14px 10px;background:#101010;border-bottom:1px solid rgba(255,255,255,.08);display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;z-index:10}
+.title h1{margin:0;font-size:18px;letter-spacing:-.05em}
+.title p{margin:2px 0 0;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:54vw}
+.scorebox{text-align:right;font-size:13px;line-height:1.38;font-weight:950}
+.scorebox span{color:var(--muted);font-weight:700}
+.stage{display:inline-block;margin-left:6px;color:#fff;background:#c00001;border-radius:999px;padding:1px 6px;font-size:10px;vertical-align:middle}
+.game{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:none;background:radial-gradient(circle at 50% 50%,rgba(192,0,1,.10),transparent 34%),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(0deg,rgba(255,255,255,.018) 1px,transparent 1px),#070707;background-size:auto,42px 42px,42px 42px}
+.canvas{position:absolute;inset:0;width:100%;height:100%}
+.tap-zone{position:absolute;inset:0;z-index:4}
+.judge{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);font-size:34px;font-weight:1000;letter-spacing:-.05em;opacity:0;pointer-events:none;z-index:8;text-shadow:0 6px 24px rgba(0,0,0,.85)}
+.judge.show{animation:judge .55s ease}
+@keyframes judge{0%{opacity:0;transform:translate(-50%,-50%) scale(.75)}22%{opacity:1;transform:translate(-50%,-62%) scale(1.08)}100%{opacity:0;transform:translate(-50%,-90%) scale(1)}}
+.overlay{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:22px;background:radial-gradient(circle at top,rgba(192,0,1,.25),transparent 34%),linear-gradient(180deg,#181818,#050505)}
+.overlay.hidden{display:none}
+.card{width:min(440px,100%);background:rgba(18,18,18,.96);border:1px solid rgba(255,255,255,.1);border-radius:26px;padding:22px;box-shadow:0 22px 80px rgba(0,0,0,.55)}
+.card h2{margin:0 0 6px;font-size:31px;letter-spacing:-.08em}
+.card p{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.5}
+.btn{width:100%;border:0;border-radius:16px;padding:14px 12px;background:var(--accent);color:#fff;font-weight:950;font-size:16px;margin-top:10px;cursor:pointer}
+.sub-btn{background:#2d2d2d;font-size:14px;padding:12px}
+.howto{margin-top:12px;color:#999;font-size:12px;line-height:1.55}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
+.stat{background:#222;border:1px solid rgba(255,255,255,.08);border-radius:15px;padding:12px}
+.stat small{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}
+.stat strong{font-size:21px}
+.flash{position:absolute;inset:0;background:rgba(192,0,1,.25);opacity:0;pointer-events:none;z-index:9}
+.flash.show{animation:damage .32s ease}
+@keyframes damage{0%,100%{opacity:0}40%{opacity:1}}
+@media (min-width:900px){body{max-width:520px;margin:0 auto;border-left:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.08)}}
+</style>
+</head>
+<body tabindex="0">
+<header class="topbar">
+  <div class="title">
+    <h1>Tap Drift</h1>
+    <p>기본차 외길 드리프트</p>
+  </div>
+  <div class="scorebox">
+    <div><span>SCORE</span> <b id="scoreText">0</b></div>
+    <div><span>BEST</span> <b id="bestText">0</b><span id="stageText" class="stage">EASY</span></div>
+  </div>
+</header>
+
+<main id="game" class="game">
+  <canvas id="canvas" class="canvas"></canvas>
+  <div id="tapZone" class="tap-zone"></div>
+  <div id="judge" class="judge">DRIFT!</div>
+  <div id="flash" class="flash"></div>
+</main>
+
+<section id="startOverlay" class="overlay">
+  <div class="card">
+    <h2>Tap Drift</h2>
+    <p>빨간 외길을 따라 달립니다. 처음은 쉽고, 시간이 지날수록 속도와 코너 빈도가 자동으로 올라갑니다.</p>
+    <button id="startBtn" class="btn">게임 시작</button>
+    <div class="howto">
+      조작법: 모바일 터치 / PC 스페이스바 = 코너 드리프트<br>
+      BGM과 효과음이 재생됩니다.<br>
+      속도에 따라 엔진음이 달라집니다.<br>
+      차량은 기본차 1종으로 고정됩니다.
+    </div>
+  </div>
+</section>
+
+<section id="resultOverlay" class="overlay hidden">
+  <div class="card">
+    <h2>CRASH!</h2>
+    <p>외길을 벗어났습니다.</p>
+    <div class="stats">
+      <div class="stat"><small>Score</small><strong id="resultScore">0</strong></div>
+      <div class="stat"><small>Best</small><strong id="resultBest">0</strong></div>
+      <div class="stat"><small>Distance</small><strong id="resultDistance">0m</strong></div>
+      <div class="stat"><small>Speed</small><strong id="resultSpeed">0</strong></div>
+      <div class="stat"><small>Perfect</small><strong id="resultPerfect">0</strong></div>
+      <div class="stat"><small>Good</small><strong id="resultGood">0</strong></div>
+    </div>
+    <button id="retryBtn" class="btn">다시 하기</button>
+    <button id="homeBtn" class="btn sub-btn">처음 화면</button>
+  </div>
+</section>
+
+<script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const game=document.getElementById("game");
+const tapZone=document.getElementById("tapZone");
+const startOverlay=document.getElementById("startOverlay");
+const resultOverlay=document.getElementById("resultOverlay");
+const startBtn=document.getElementById("startBtn");
+const retryBtn=document.getElementById("retryBtn");
+const homeBtn=document.getElementById("homeBtn");
+const scoreText=document.getElementById("scoreText");
+const bestText=document.getElementById("bestText");
+const stageText=document.getElementById("stageText");
+const resultScore=document.getElementById("resultScore");
+const resultBest=document.getElementById("resultBest");
+const resultDistance=document.getElementById("resultDistance");
+const resultSpeed=document.getElementById("resultSpeed");
+const resultPerfect=document.getElementById("resultPerfect");
+const resultGood=document.getElementById("resultGood");
+const judge=document.getElementById("judge");
+const flash=document.getElementById("flash");
+
+let W=0,H=0,dpr=1;
+let running=false,raf=null,last=0;
+let best=Number(localStorage.getItem("tap-drift-no-menu-best")||0);
+let car,path,currentSeg,camera,score,distance,speed,roadWidth,totalTime,stage,perfectCount,goodCount;
+let particles=[];
+
+// ---- Sound System ----
+// 외부 음원 파일 없이 Web Audio API로 BGM/효과음을 생성합니다.
+let audioCtx=null;
+let masterGain=null;
+let bgmGain=null;
+let bgmTimer=null;
+let engineOsc=null;
+let engineGain=null;
+let engineFilter=null;
+let soundEnabled=false;
+
+const bgmNotes=[220,246.94,261.63,329.63,293.66,246.94,196,246.94];
+
+function initAudio(){
+  if(audioCtx)return;
+  const AudioContext=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContext)return;
+
+  audioCtx=new AudioContext();
+  masterGain=audioCtx.createGain();
+  masterGain.gain.value=.62;
+  masterGain.connect(audioCtx.destination);
+
+  bgmGain=audioCtx.createGain();
+  bgmGain.gain.value=.18;
+  bgmGain.connect(masterGain);
+}
+
+function unlockAudio(){
+  initAudio();
+  if(!audioCtx)return;
+  if(audioCtx.state==="suspended")audioCtx.resume();
+  soundEnabled=true;
+  tone(440,.07,"sine",.13,0);
+  tone(660,.09,"sine",.12,.06);
+  startBgm();
+}
+
+function tone(freq,duration=.12,type="sine",volume=.18,when=0){
+  if(!soundEnabled||!audioCtx||!masterGain)return;
+  const t=audioCtx.currentTime+when;
+  const osc=audioCtx.createOscillator();
+  const gain=audioCtx.createGain();
+
+  osc.type=type;
+  osc.frequency.setValueAtTime(freq,t);
+
+  gain.gain.setValueAtTime(0,t);
+  gain.gain.linearRampToValueAtTime(volume,t+.01);
+  gain.gain.exponentialRampToValueAtTime(.001,t+duration);
+
+  osc.connect(gain);
+  gain.connect(masterGain);
+  osc.start(t);
+  osc.stop(t+duration+.03);
+}
+
+function noise(duration=.18,volume=.22){
+  if(!soundEnabled||!audioCtx||!masterGain)return;
+  const bufferSize=Math.floor(audioCtx.sampleRate*duration);
+  const buffer=audioCtx.createBuffer(1,bufferSize,audioCtx.sampleRate);
+  const data=buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++){
+    data[i]=(Math.random()*2-1)*(1-i/bufferSize);
+  }
+
+  const src=audioCtx.createBufferSource();
+  const gain=audioCtx.createGain();
+  const filter=audioCtx.createBiquadFilter();
+
+  filter.type="lowpass";
+  filter.frequency.value=900;
+  gain.gain.value=volume;
+
+  src.buffer=buffer;
+  src.connect(filter);
+  filter.connect(gain);
+  gain.connect(masterGain);
+  src.start();
+}
+
+function startBgm(){
+  if(!soundEnabled||!audioCtx||bgmTimer)return;
+  let step=0;
+
+  function playBgmStep(){
+    if(!soundEnabled||!audioCtx||audioCtx.state!=="running")return;
+
+    const root=bgmNotes[step%bgmNotes.length];
+    const t=audioCtx.currentTime;
+
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    const filter=audioCtx.createBiquadFilter();
+
+    osc.type="triangle";
+    osc.frequency.setValueAtTime(root,t);
+
+    filter.type="lowpass";
+    filter.frequency.setValueAtTime(1200,t);
+
+    gain.gain.setValueAtTime(0,t);
+    gain.gain.linearRampToValueAtTime(.22,t+.015);
+    gain.gain.exponentialRampToValueAtTime(.001,t+.34);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(bgmGain);
+
+    osc.start(t);
+    osc.stop(t+.38);
+
+    if(step%2===0){
+      const bass=audioCtx.createOscillator();
+      const bg=audioCtx.createGain();
+      bass.type="sine";
+      bass.frequency.setValueAtTime(92,t);
+      bass.frequency.exponentialRampToValueAtTime(58,t+.18);
+      bg.gain.setValueAtTime(.17,t);
+      bg.gain.exponentialRampToValueAtTime(.001,t+.23);
+      bass.connect(bg);
+      bg.connect(bgmGain);
+      bass.start(t);
+      bass.stop(t+.25);
+    }
+
+    step++;
+  }
+
+  playBgmStep();
+  bgmTimer=setInterval(playBgmStep,230);
+}
+
+function stopBgm(){
+  if(bgmTimer){
+    clearInterval(bgmTimer);
+    bgmTimer=null;
+  }
+}
+
+
+function startEngine(){
+  if(!soundEnabled||!audioCtx||engineOsc)return;
+
+  engineOsc=audioCtx.createOscillator();
+  engineGain=audioCtx.createGain();
+  engineFilter=audioCtx.createBiquadFilter();
+
+  engineOsc.type="sawtooth";
+  engineOsc.frequency.setValueAtTime(65,audioCtx.currentTime);
+
+  engineFilter.type="lowpass";
+  engineFilter.frequency.setValueAtTime(420,audioCtx.currentTime);
+
+  engineGain.gain.setValueAtTime(0,audioCtx.currentTime);
+  engineGain.gain.linearRampToValueAtTime(.045,audioCtx.currentTime+.25);
+
+  engineOsc.connect(engineFilter);
+  engineFilter.connect(engineGain);
+  engineGain.connect(masterGain);
+
+  engineOsc.start();
+}
+
+function updateEngineSound(){
+  if(!soundEnabled||!audioCtx||!engineOsc||!engineGain||!engineFilter)return;
+
+  const cfg=getCurrentCfg();
+  const speedRatio=Math.max(0,Math.min(1,(speed-stages.easy.speed)/(stages.hard.speed+95-stages.easy.speed)));
+
+  const targetFreq=62+speedRatio*95;
+  const targetVol=.035+speedRatio*.075;
+  const targetFilter=360+speedRatio*1200;
+
+  const t=audioCtx.currentTime;
+  engineOsc.frequency.linearRampToValueAtTime(targetFreq,t+.08);
+  engineGain.gain.linearRampToValueAtTime(targetVol,t+.08);
+  engineFilter.frequency.linearRampToValueAtTime(targetFilter,t+.08);
+}
+
+function revEngine(){
+  if(!soundEnabled||!audioCtx||!engineOsc||!engineGain)return;
+  const t=audioCtx.currentTime;
+  const nowFreq=engineOsc.frequency.value||90;
+  engineOsc.frequency.cancelScheduledValues(t);
+  engineOsc.frequency.setValueAtTime(nowFreq,t);
+  engineOsc.frequency.linearRampToValueAtTime(nowFreq+55,t+.08);
+  engineOsc.frequency.linearRampToValueAtTime(nowFreq+10,t+.23);
+
+  engineGain.gain.cancelScheduledValues(t);
+  engineGain.gain.setValueAtTime(engineGain.gain.value||.06,t);
+  engineGain.gain.linearRampToValueAtTime(.16,t+.05);
+  engineGain.gain.linearRampToValueAtTime(.07,t+.22);
+}
+
+function stopEngine(){
+  if(!audioCtx||!engineOsc)return;
+  const t=audioCtx.currentTime;
+  try{
+    engineGain.gain.cancelScheduledValues(t);
+    engineGain.gain.setValueAtTime(engineGain.gain.value||.04,t);
+    engineGain.gain.exponentialRampToValueAtTime(.001,t+.25);
+    engineOsc.stop(t+.28);
+  }catch(e){}
+  engineOsc=null;
+  engineGain=null;
+  engineFilter=null;
+}
+
+
+function sfxPerfect(){
+  tone(1046.5,.045,"square",.20,0);
+  tone(523.25,.10,"sine",.34,0);
+  tone(659.25,.12,"sine",.31,.07);
+  tone(783.99,.16,"triangle",.30,.14);
+}
+
+function sfxGood(){
+  tone(784,.04,"square",.15,0);
+  tone(392,.10,"triangle",.29,0);
+  tone(523.25,.14,"triangle",.26,.08);
+}
+
+function sfxEarlyLate(){
+  tone(160,.12,"sawtooth",.12,0);
+  tone(110,.16,"sawtooth",.10,.08);
+}
+
+function sfxCrash(){
+  noise(.25,.22);
+  tone(95,.22,"sawtooth",.14,0);
+  tone(55,.28,"square",.08,.06);
+}
+
+
+const stages={
+  easy:{start:0,speed:124,width:48,accel:3.6,turnWindow:23,label:"EASY"},
+  normal:{start:25,speed:152,width:43,accel:5.2,turnWindow:23,label:"NORMAL"},
+  hard:{start:55,speed:178,width:39,accel:7.0,turnWindow:23,label:"HARD"}
+};
+
+const carLength=34;
+const carWidth=23;
+
+function getStageByTime(){
+  if(totalTime>=stages.hard.start)return "hard";
+  if(totalTime>=stages.normal.start)return "normal";
+  return "easy";
+}
+
+function getCurrentCfg(){
+  return stages[stage]||stages.easy;
+}
+
+function resize(){
+  const rect=game.getBoundingClientRect();
+  W=rect.width;H=rect.height;dpr=window.devicePixelRatio||1;
+  canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);
+  canvas.style.width=W+"px";canvas.style.height=H+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener("resize",resize);
+resize();
+
+function makePath(){
+  const pts=[{x:0,y:0}];
+  let x=0,y=0;
+  const xLimit=190;
+  for(let i=0;i<260;i++){
+    const progress=Math.min(1,i/90);
+    const shrink=progress*.92;
+    const upLen=Math.max(62,190-shrink*88+Math.random()*(82-shrink*42));
+    y-=upLen;
+    pts.push({x,y});
+    let dir;
+    if(x>xLimit*.56)dir=-1;
+    else if(x<-xLimit*.56)dir=1;
+    else dir=Math.random()<.5?-1:1;
+    const sideLen=Math.max(62,158-shrink*72+Math.random()*(88-shrink*42));
+    x+=dir*sideLen;
+    x=Math.max(-xLimit,Math.min(xLimit,x));
+    pts.push({x,y});
+  }
+  return pts;
+}
+
+function segmentInfo(i){
+  const a=path[i],b=path[i+1];
+  const dx=b.x-a.x,dy=b.y-a.y;
+  const len=Math.hypot(dx,dy);
+  return{a,b,dx,dy,len,ux:dx/len,uy:dy/len};
+}
+
+function resetGame(){
+  stage="easy";
+  const cfg=stages.easy;
+  path=makePath();
+  currentSeg=0;
+  score=0;distance=0;totalTime=0;perfectCount=0;goodCount=0;
+  speed=cfg.speed;roadWidth=cfg.width;
+  particles=[];
+  const s=segmentInfo(0);
+  car={x:s.a.x,y:s.a.y,dirX:s.ux,dirY:s.uy,angle:Math.atan2(s.uy,s.ux)};
+  camera={x:car.x,y:car.y};
+  updateTexts();
+}
+
+function startGame(){
+  unlockAudio();
+  resetGame();
+  document.body.focus();
+  startOverlay.classList.add("hidden");
+  resultOverlay.classList.add("hidden");
+  running=true;
+  startEngine();
+  sfxGood();
+  last=performance.now();
+  raf=requestAnimationFrame(loop);
+}
+
+function loop(now){
+  if(!running)return;
+  const dt=Math.min(.033,(now-last)/1000);
+  last=now;
+  update(dt);
+  draw();
+  raf=requestAnimationFrame(loop);
+}
+
+function update(dt){
+  totalTime+=dt;
+  const nextStage=getStageByTime();
+  if(nextStage!==stage){
+    stage=nextStage;
+    showJudge(stages[stage].label);
+  }
+  const cfg=getCurrentCfg();
+  speed+=cfg.accel*dt;
+  roadWidth+=(cfg.width-roadWidth)*0.025;
+  distance+=speed*dt/10;
+  score=Math.floor(distance*3+totalTime*8+(speed-120)*.45);
+
+  car.x+=car.dirX*speed*dt;
+  car.y+=car.dirY*speed*dt;
+  camera.x+=(car.x-camera.x)*.14;
+  camera.y+=(car.y-camera.y)*.14;
+
+  if(!isCarInsideRoad()){
+    crash();
+    return;
+  }
+  updateParticles(dt);
+  updateTexts();
+}
+
+function isCarInsideRoad(){
+  const corners=getCarCorners();
+  const timing=getCornerTimingInfo();
+  const nearCorner=timing && timing.remaining<roadWidth*0.75 && timing.remaining>-roadWidth*0.45;
+  const allowance=nearCorner?4.5:1.2;
+
+  for(const p of corners){
+    const d=distanceToVisiblePath(p.x,p.y);
+    if(d>roadWidth/2+allowance)return false;
+  }
+  return true;
+}
+
+function getCarCorners(){
+  const ca=Math.cos(car.angle),sa=Math.sin(car.angle);
+  const halfL=carLength/2-2,halfW=carWidth/2-1;
+  return[
+    {x:halfL,y:halfW},{x:halfL,y:-halfW},{x:-halfL,y:halfW},{x:-halfL,y:-halfW}
+  ].map(p=>({x:car.x+p.x*ca-p.y*sa,y:car.y+p.x*sa+p.y*ca}));
+}
+
+function distanceToVisiblePath(x,y){
+  let best=Infinity;
+  for(let i=Math.max(0,currentSeg-1);i<Math.min(path.length-1,currentSeg+3);i++){
+    const a=path[i],b=path[i+1];
+    best=Math.min(best,pointSegmentDistance(x,y,a.x,a.y,b.x,b.y));
+  }
+  return best;
+}
+
+function pointSegmentDistance(px,py,x1,y1,x2,y2){
+  const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy;
+  if(l2===0)return Math.hypot(px-x1,py-y1);
+  let t=((px-x1)*dx+(py-y1)*dy)/l2;
+  t=Math.max(0,Math.min(1,t));
+  const x=x1+t*dx,y=y1+t*dy;
+  return Math.hypot(px-x,py-y);
+}
+
+
+function getCornerTimingInfo(){
+  if(currentSeg>=path.length-2)return null;
+
+  const seg=segmentInfo(currentSeg);
+  const vx=car.x-seg.a.x;
+  const vy=car.y-seg.a.y;
+
+  // 현재 직선 구간을 얼마나 진행했는지
+  const progress=vx*seg.ux+vy*seg.uy;
+
+  // 코너까지 남은 거리. 양수 = 코너 전, 음수 = 코너를 지난 상태
+  const remaining=seg.len-progress;
+
+  // 차가 도로 중심선에서 옆으로 얼마나 벗어났는지
+  const lateral=Math.abs(vx*seg.uy-vy*seg.ux);
+
+  return {
+    remaining,
+    lateral,
+    corner:seg.b,
+    seg
+  };
+}
+
+function getNextCornerInfo(){
+  if(currentSeg>=path.length-2)return null;
+  const seg=segmentInfo(currentSeg);
+  const corner=seg.b;
+  const dist=Math.hypot(corner.x-car.x,corner.y-car.y);
+  return{corner,dist,seg};
+}
+
+function tap(){
+  if(!running)return;
+
+  const cfg=getCurrentCfg();
+  const timing=getCornerTimingInfo();
+  if(!timing)return;
+
+  const remaining=timing.remaining;
+
+  // 성공 판정 간격.
+  // 코너 직전뿐 아니라 아주 살짝 지난 직후도 허용해서 조작감 보정.
+  const earlyWindow=cfg.turnWindow;
+  const lateWindow=cfg.turnWindow*0.48;
+  const perfectWindow=cfg.turnWindow*0.28;
+
+  const isTooEarly=remaining>earlyWindow;
+  const isTooLate=remaining<-lateWindow;
+
+  if(isTooEarly){
+    sfxEarlyLate();
+    showJudge("EARLY");
+    crash();
+    return;
+  }
+
+  if(isTooLate){
+    sfxEarlyLate();
+    showJudge("LATE");
+    crash();
+    return;
+  }
+
+  currentSeg++;
+  const ns=segmentInfo(currentSeg);
+
+  // 코너 중심으로 스냅 후 다음 구간 방향으로 전환
+  car.x=ns.a.x;
+  car.y=ns.a.y;
+  car.dirX=ns.ux;
+  car.dirY=ns.uy;
+  car.angle=Math.atan2(ns.uy,ns.ux);
+
+  const accuracy=Math.abs(remaining);
+
+  if(accuracy<=perfectWindow){
+    perfectCount++;
+    score+=120;
+    spawnDriftParticles(car.x,car.y,"perfect");
+    showJudge("PERFECT");
+  }else{
+    goodCount++;
+    score+=60;
+    spawnDriftParticles(car.x,car.y,"good");
+    showJudge("GOOD");
+  }
+}
+
+function crash(){
+  sfxCrash();
+  stopBgm();
+  stopEngine();
+  running=false;
+  cancelAnimationFrame(raf);
+  flash.classList.remove("show");
+  void flash.offsetWidth;
+  flash.classList.add("show");
+  best=Math.max(best,score);
+  localStorage.setItem("tap-drift-no-menu-best",String(best));
+  resultScore.textContent=score.toLocaleString();
+  resultBest.textContent=best.toLocaleString();
+  resultDistance.textContent=Math.floor(distance)+"m";
+  resultSpeed.textContent=Math.floor(speed);
+  resultPerfect.textContent=perfectCount;
+  resultGood.textContent=goodCount;
+  setTimeout(()=>resultOverlay.classList.remove("hidden"),330);
+}
+
+function showJudge(text){
+  judge.textContent=text;
+  judge.classList.remove("show");
+  void judge.offsetWidth;
+  judge.classList.add("show");
+}
+
+function spawnDriftParticles(x,y,type="good"){
+  const count=type==="perfect"?24:15;
+  const power=type==="perfect"?170:120;
+  for(let i=0;i<count;i++){
+    particles.push({
+      x,y,
+      vx:(Math.random()-.5)*power-car.dirX*80,
+      vy:(Math.random()-.5)*power-car.dirY*80,
+      life:(type==="perfect"?.48:.36)+Math.random()*.25,
+      max:.75,
+      type
+    });
+  }
+}
+
+function updateParticles(dt){
+  particles=particles.filter(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;return p.life>0});
+}
+
+function worldToScreen(x,y){
+  return{x:W/2+(x-camera.x),y:H*.66+(y-camera.y)};
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  drawGrid();
+  drawRoad();
+  drawParticles();
+  drawCar();
+}
+
+function drawGrid(){
+  ctx.save();
+  ctx.strokeStyle="rgba(255,255,255,.028)";
+  ctx.lineWidth=1;
+  const step=42;
+  const ox=(-camera.x%step+step)%step;
+  const oy=(-camera.y%step+step)%step;
+  for(let x=ox;x<W;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=oy;y<H;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  ctx.restore();
+}
+
+function drawRoad(){
+  ctx.save();
+  ctx.lineCap="butt";
+  ctx.lineJoin="miter";
+  const start=Math.max(0,currentSeg-2);
+  const end=Math.min(path.length-1,currentSeg+9);
+
+  ctx.beginPath();
+  for(let i=start;i<=end;i++){
+    const p=worldToScreen(path[i].x,path[i].y);
+    if(i===start)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
+  }
+  ctx.strokeStyle="rgba(192,0,1,.34)";
+  ctx.lineWidth=roadWidth+12;
+  ctx.shadowColor="rgba(192,0,1,.5)";
+  ctx.shadowBlur=14;
+  ctx.stroke();
+
+  ctx.shadowBlur=0;
+  ctx.beginPath();
+  for(let i=start;i<=end;i++){
+    const p=worldToScreen(path[i].x,path[i].y);
+    if(i===start)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
+  }
+  ctx.strokeStyle="#202020";
+  ctx.lineWidth=roadWidth;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCar(){
+  const p=worldToScreen(car.x,car.y);
+  ctx.save();
+  ctx.translate(p.x,p.y);
+  ctx.rotate(car.angle);
+  ctx.shadowColor="rgba(255,255,255,.28)";
+  ctx.shadowBlur=9;
+  ctx.fillStyle="#f3f3f3";
+  roundRect(ctx,-carLength/2,-carWidth/2,carLength,carWidth,5);
+  ctx.fill();
+  ctx.fillStyle="#c00001";
+  roundRect(ctx,-8,-8,17,16,4);
+  ctx.fill();
+  ctx.fillStyle="#151515";
+  ctx.fillRect(-13,-14,7,4);ctx.fillRect(-13,10,7,4);ctx.fillRect(7,-14,7,4);ctx.fillRect(7,10,7,4);
+  ctx.fillStyle="#ffd35f";
+  ctx.fillRect(13,-6,4,4);ctx.fillRect(13,2,4,4);
+  ctx.restore();
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+}
+
+function drawParticles(){
+  ctx.save();
+  for(const p of particles){
+    const s=worldToScreen(p.x,p.y);
+    ctx.globalAlpha=Math.max(0,p.life/p.max);
+    ctx.fillStyle=p.type==="perfect"?"#ffd35f":"#ffffff";
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,p.type==="perfect"?3.1:2.3,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+function updateTexts(){
+  scoreText.textContent=score.toLocaleString();
+  bestText.textContent=best.toLocaleString();
+  stageText.textContent=stages[stage].label;
+}
+
+tapZone.addEventListener("pointerdown",e=>{e.preventDefault();document.body.focus();tap()});
+window.addEventListener("pointerdown",()=>document.body.focus());
+startBtn.addEventListener("click",startGame);
+retryBtn.addEventListener("click",startGame);
+homeBtn.addEventListener("click",()=>{resultOverlay.classList.add("hidden");startOverlay.classList.remove("hidden")});
+let spacePressed=false;
+
+function handleDriftKey(e){
+  const isSpace=e.code==="Space"||e.key===" "||e.key==="Spacebar";
+  if(!isSpace)return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  if(e.type==="keydown"){
+    if(spacePressed)return;
+    spacePressed=true;
+    tap();
+  }
+
+  if(e.type==="keyup"){
+    spacePressed=false;
+  }
+}
+
+window.addEventListener("keydown",handleDriftKey,{capture:true});
+window.addEventListener("keyup",handleDriftKey,{capture:true});
+document.addEventListener("keydown",handleDriftKey,{capture:true});
+document.addEventListener("keyup",handleDriftKey,{capture:true});
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&running)crash()});
+if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("./service-worker.js").catch(()=>{})})}
+resetGame();
+draw();
+</script>
+</body>
+</html>
