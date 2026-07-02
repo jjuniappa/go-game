@@ -1,7 +1,7 @@
 {
   "name": "Tap Drift",
   "short_name": "TapDrift",
-  "description": "코너 타이밍 판정을 수정한 Tap Drift",
+  "description": "직각 코너와 1/4·2/4·3/4 원형 코너가 섞인 홀드 드리프트 게임",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
