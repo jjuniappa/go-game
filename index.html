@@ -69,7 +69,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
     <p>빨간 외길을 따라 달립니다. 처음은 쉽고, 시간이 지날수록 속도와 코너 빈도가 자동으로 올라갑니다.</p>
     <button id="startBtn" class="btn">게임 시작</button>
     <div class="howto">
-      조작법: 모바일 터치 / PC 스페이스바 = 90도 방향 전환<br>
+      조작법: 모바일 터치 / PC 스페이스바 = 코너 드리프트<br>
       차량은 기본차 1종으로 고정됩니다.
     </div>
   </div>
@@ -239,7 +239,10 @@ function update(dt){
 
 function isCarInsideRoad(){
   const corners=getCarCorners();
-  const allowance=1.2;
+  const timing=getCornerTimingInfo();
+  const nearCorner=timing && timing.remaining<roadWidth*0.75 && timing.remaining>-roadWidth*0.45;
+  const allowance=nearCorner?4.5:1.2;
+
   for(const p of corners){
     const d=distanceToVisiblePath(p.x,p.y);
     if(d>roadWidth/2+allowance)return false;
@@ -273,6 +276,31 @@ function pointSegmentDistance(px,py,x1,y1,x2,y2){
   return Math.hypot(px-x,py-y);
 }
 
+
+function getCornerTimingInfo(){
+  if(currentSeg>=path.length-2)return null;
+
+  const seg=segmentInfo(currentSeg);
+  const vx=car.x-seg.a.x;
+  const vy=car.y-seg.a.y;
+
+  // 현재 직선 구간을 얼마나 진행했는지
+  const progress=vx*seg.ux+vy*seg.uy;
+
+  // 코너까지 남은 거리. 양수 = 코너 전, 음수 = 코너를 지난 상태
+  const remaining=seg.len-progress;
+
+  // 차가 도로 중심선에서 옆으로 얼마나 벗어났는지
+  const lateral=Math.abs(vx*seg.uy-vy*seg.ux);
+
+  return {
+    remaining,
+    lateral,
+    corner:seg.b,
+    seg
+  };
+}
+
 function getNextCornerInfo(){
   if(currentSeg>=path.length-2)return null;
   const seg=segmentInfo(currentSeg);
@@ -283,37 +311,56 @@ function getNextCornerInfo(){
 
 function tap(){
   if(!running)return;
+
   const cfg=getCurrentCfg();
-  const info=getNextCornerInfo();
-  if(!info)return;
+  const timing=getCornerTimingInfo();
+  if(!timing)return;
 
-  const d=info.dist;
-  const perfectWindow=cfg.turnWindow*0.45;
-  const goodWindow=cfg.turnWindow;
+  const remaining=timing.remaining;
 
-  if(d<=goodWindow){
-    currentSeg++;
-    const ns=segmentInfo(currentSeg);
-    car.x=ns.a.x;
-    car.y=ns.a.y;
-    car.dirX=ns.ux;
-    car.dirY=ns.uy;
-    car.angle=Math.atan2(ns.uy,ns.ux);
+  // 성공 판정 간격.
+  // 코너 직전뿐 아니라 아주 살짝 지난 직후도 허용해서 조작감 보정.
+  const earlyWindow=cfg.turnWindow;
+  const lateWindow=cfg.turnWindow*0.48;
+  const perfectWindow=cfg.turnWindow*0.28;
 
-    if(d<=perfectWindow){
-      perfectCount++;
-      score+=120;
-      spawnDriftParticles(car.x,car.y,"perfect");
-      showJudge("PERFECT");
-    }else{
-      goodCount++;
-      score+=60;
-      spawnDriftParticles(car.x,car.y,"good");
-      showJudge("GOOD");
-    }
-  }else{
+  const isTooEarly=remaining>earlyWindow;
+  const isTooLate=remaining<-lateWindow;
+
+  if(isTooEarly){
     showJudge("EARLY");
     crash();
+    return;
+  }
+
+  if(isTooLate){
+    showJudge("LATE");
+    crash();
+    return;
+  }
+
+  currentSeg++;
+  const ns=segmentInfo(currentSeg);
+
+  // 코너 중심으로 스냅 후 다음 구간 방향으로 전환
+  car.x=ns.a.x;
+  car.y=ns.a.y;
+  car.dirX=ns.ux;
+  car.dirY=ns.uy;
+  car.angle=Math.atan2(ns.uy,ns.ux);
+
+  const accuracy=Math.abs(remaining);
+
+  if(accuracy<=perfectWindow){
+    perfectCount++;
+    score+=120;
+    spawnDriftParticles(car.x,car.y,"perfect");
+    showJudge("PERFECT");
+  }else{
+    goodCount++;
+    score+=60;
+    spawnDriftParticles(car.x,car.y,"good");
+    showJudge("GOOD");
   }
 }
 
