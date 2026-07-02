@@ -1,7 +1,7 @@
 {
   "name": "Tap Drift",
   "short_name": "TapDrift",
-  "description": "기본차 1종으로 플레이하는 Tap Drift",
+  "description": "PERFECT/GOOD 점수와 스페이스바 조작을 추가한 Tap Drift",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

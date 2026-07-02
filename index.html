@@ -69,7 +69,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
     <p>빨간 외길을 따라 달립니다. 처음은 쉽고, 시간이 지날수록 속도와 코너 빈도가 자동으로 올라갑니다.</p>
     <button id="startBtn" class="btn">게임 시작</button>
     <div class="howto">
-      조작법: 화면 아무 곳이나 터치 = 90도 방향 전환<br>
+      조작법: 모바일 터치 / PC 스페이스바 = 90도 방향 전환<br>
       차량은 기본차 1종으로 고정됩니다.
     </div>
   </div>
@@ -84,6 +84,8 @@ body{min-height:100dvh;display:flex;flex-direction:column}
       <div class="stat"><small>Best</small><strong id="resultBest">0</strong></div>
       <div class="stat"><small>Distance</small><strong id="resultDistance">0m</strong></div>
       <div class="stat"><small>Speed</small><strong id="resultSpeed">0</strong></div>
+      <div class="stat"><small>Perfect</small><strong id="resultPerfect">0</strong></div>
+      <div class="stat"><small>Good</small><strong id="resultGood">0</strong></div>
     </div>
     <button id="retryBtn" class="btn">다시 하기</button>
     <button id="homeBtn" class="btn sub-btn">처음 화면</button>
@@ -107,13 +109,15 @@ const resultScore=document.getElementById("resultScore");
 const resultBest=document.getElementById("resultBest");
 const resultDistance=document.getElementById("resultDistance");
 const resultSpeed=document.getElementById("resultSpeed");
+const resultPerfect=document.getElementById("resultPerfect");
+const resultGood=document.getElementById("resultGood");
 const judge=document.getElementById("judge");
 const flash=document.getElementById("flash");
 
 let W=0,H=0,dpr=1;
 let running=false,raf=null,last=0;
 let best=Number(localStorage.getItem("tap-drift-no-menu-best")||0);
-let car,path,currentSeg,camera,score,distance,speed,roadWidth,totalTime,stage;
+let car,path,currentSeg,camera,score,distance,speed,roadWidth,totalTime,stage,perfectCount,goodCount;
 let particles=[];
 
 const stages={
@@ -179,7 +183,7 @@ function resetGame(){
   const cfg=stages.easy;
   path=makePath();
   currentSeg=0;
-  score=0;distance=0;totalTime=0;
+  score=0;distance=0;totalTime=0;perfectCount=0;goodCount=0;
   speed=cfg.speed;roadWidth=cfg.width;
   particles=[];
   const s=segmentInfo(0);
@@ -281,15 +285,31 @@ function tap(){
   const cfg=getCurrentCfg();
   const info=getNextCornerInfo();
   if(!info)return;
-  if(info.dist<=cfg.turnWindow){
+
+  const d=info.dist;
+  const perfectWindow=cfg.turnWindow*0.45;
+  const goodWindow=cfg.turnWindow;
+
+  if(d<=goodWindow){
     currentSeg++;
     const ns=segmentInfo(currentSeg);
-    car.x=ns.a.x;car.y=ns.a.y;
-    car.dirX=ns.ux;car.dirY=ns.uy;
+    car.x=ns.a.x;
+    car.y=ns.a.y;
+    car.dirX=ns.ux;
+    car.dirY=ns.uy;
     car.angle=Math.atan2(ns.uy,ns.ux);
-    score+=50;
-    spawnDriftParticles(car.x,car.y);
-    showJudge("DRIFT!");
+
+    if(d<=perfectWindow){
+      perfectCount++;
+      score+=120;
+      spawnDriftParticles(car.x,car.y,"perfect");
+      showJudge("PERFECT");
+    }else{
+      goodCount++;
+      score+=60;
+      spawnDriftParticles(car.x,car.y,"good");
+      showJudge("GOOD");
+    }
   }else{
     showJudge("EARLY");
     crash();
@@ -308,6 +328,8 @@ function crash(){
   resultBest.textContent=best.toLocaleString();
   resultDistance.textContent=Math.floor(distance)+"m";
   resultSpeed.textContent=Math.floor(speed);
+  resultPerfect.textContent=perfectCount;
+  resultGood.textContent=goodCount;
   setTimeout(()=>resultOverlay.classList.remove("hidden"),330);
 }
 
@@ -318,9 +340,18 @@ function showJudge(text){
   judge.classList.add("show");
 }
 
-function spawnDriftParticles(x,y){
-  for(let i=0;i<16;i++){
-    particles.push({x,y,vx:(Math.random()-.5)*120-car.dirX*70,vy:(Math.random()-.5)*120-car.dirY*70,life:.38+Math.random()*.24,max:.65});
+function spawnDriftParticles(x,y,type="good"){
+  const count=type==="perfect"?24:15;
+  const power=type==="perfect"?170:120;
+  for(let i=0;i<count;i++){
+    particles.push({
+      x,y,
+      vx:(Math.random()-.5)*power-car.dirX*80,
+      vy:(Math.random()-.5)*power-car.dirY*80,
+      life:(type==="perfect"?.48:.36)+Math.random()*.25,
+      max:.75,
+      type
+    });
   }
 }
 
@@ -411,8 +442,10 @@ function drawParticles(){
   for(const p of particles){
     const s=worldToScreen(p.x,p.y);
     ctx.globalAlpha=Math.max(0,p.life/p.max);
-    ctx.fillStyle="#fff";
-    ctx.beginPath();ctx.arc(s.x,s.y,2.3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=p.type==="perfect"?"#ffd35f":"#ffffff";
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,p.type==="perfect"?3.1:2.3,0,Math.PI*2);
+    ctx.fill();
   }
   ctx.globalAlpha=1;
   ctx.restore();
@@ -428,6 +461,12 @@ tapZone.addEventListener("pointerdown",e=>{e.preventDefault();tap()});
 startBtn.addEventListener("click",startGame);
 retryBtn.addEventListener("click",startGame);
 homeBtn.addEventListener("click",()=>{resultOverlay.classList.add("hidden");startOverlay.classList.remove("hidden")});
+document.addEventListener("keydown",e=>{
+  if(e.code==="Space"){
+    e.preventDefault();
+    tap();
+  }
+});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&running)crash()});
 if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("./service-worker.js").catch(()=>{})})}
 resetGame();
